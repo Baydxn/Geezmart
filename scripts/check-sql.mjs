@@ -186,6 +186,11 @@ function columnsFromCreateTable(stmt) {
   return cols;
 }
 
+// Concatenated schema, used for enum coherence checks.
+let allSql = '';
+for (const f of files) allSql += readFileSync(join(dir, f), 'utf8') + '\n';
+allSql += readFileSync(seedFile, 'utf8');
+
 const orderProblems = [];
 const colsAt = new Map();
 
@@ -261,6 +266,51 @@ for (const m of seed.matchAll(/insert\s+into\s+(?:public\.)?(\w+)\s*\(([^)]+)\)/
     if (col && !known.has(col)) {
       errors.push(`seed.sql: column "${col}" not found on ${table}`);
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Enum coherence: every default / cast must name a real enum member.
+// ---------------------------------------------------------------------------
+const enumValues = {};
+for (const [name, body] of [...allSql.matchAll(/create type public\.(\w+) as enum \(([^)]*)\)/g)].map(
+  (m) => [m[1], m[2]],
+)) {
+  enumValues[name] = body
+    .split(',')
+    .map((v) => v.trim().replace(/^'|'$/g, ''))
+    .filter(Boolean);
+}
+
+for (const m of allSql.matchAll(/public\.(\w+)\s+not null default '([^']+)'/g)) {
+  const [, type, value] = m;
+  if (enumValues[type] && !enumValues[type].includes(value)) {
+    errors.push(
+      `enum mismatch: public.${type} defaults to '${value}' which is not a member of [${enumValues[type].join(', ')}]`,
+    );
+  }
+}
+for (const m of allSql.matchAll(/'([^']+)'::public\.(\w+)/g)) {
+  const [, value, type] = m;
+  if (enumValues[type] && !enumValues[type].includes(value)) {
+    errors.push(`bad cast: '${value}'::public.${type} is not a member of [${enumValues[type].join(', ')}]`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// BOM check. A UTF-8 BOM at the start of _headers/_redirects makes Cloudflare
+// reject the deployment with "Expected a path before headers", and it silently
+// breaks the SPA fallback too.
+// ---------------------------------------------------------------------------
+const bomFiles = ['public/_headers', 'public/_redirects', 'index.html', 'wrangler.toml'];
+for (const rel of bomFiles) {
+  try {
+    const buf = readFileSync(join(root, rel));
+    if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
+      errors.push(`${rel}: starts with a UTF-8 BOM (save as UTF-8 WITHOUT BOM)`);
+    }
+  } catch {
+    /* file optional */
   }
 }
 

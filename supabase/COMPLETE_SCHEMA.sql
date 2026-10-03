@@ -37,11 +37,24 @@ create extension if not exists "btree_gist";   -- exclusion constraints (sale wi
 -- ---------------------------------------------------------------------------
 -- Money / shared domain types
 -- ---------------------------------------------------------------------------
+-- 'customer' is the default role for a signed-up shopper; the rest are staff.
 do $$ begin
   create type public.app_role as enum (
-    'super_admin','admin','product_manager','order_manager','support'
+    'customer','super_admin','admin','product_manager','order_manager','support'
   );
 exception when duplicate_object then null; end $$;
+
+-- Upgrade path: if the type already exists from an earlier run that omitted
+-- 'customer', add the value in place (before/after labels keep existing rows).
+do $$ begin
+  if not exists (
+    select 1 from pg_enum e
+      join pg_type t on t.oid = e.enumtypid
+     where t.typname = 'app_role' and e.enumlabel = 'customer'
+  ) then
+    alter type public.app_role add value if not exists 'customer';
+  end if;
+end $$;
 
 do $$ begin
   create type public.account_status as enum ('active','suspended','deleted');

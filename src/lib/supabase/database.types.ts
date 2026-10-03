@@ -806,7 +806,7 @@ export type Database = {
       effective_price: { Args: { p_product: unknown }; Returns: number };
     };
     Enums: {
-      app_role: 'super_admin' | 'admin' | 'product_manager' | 'order_manager' | 'support';
+      app_role: 'customer' | 'super_admin' | 'admin' | 'product_manager' | 'order_manager' | 'support';
       account_status: 'active' | 'suspended' | 'deleted';
       product_status: 'draft' | 'published' | 'hidden' | 'out_of_stock' | 'coming_soon';
       order_status:
