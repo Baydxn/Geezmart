@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "check:smoke": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite build --ssr scripts/ssr-smoke.tsx --outDir dist-ssm && node scripts/run-smoke.mjs",
     "deploy": "npm run build && wrangler pages deploy dist",
-    "check:sql": "node scripts/check-sql.mjs"
+    "check:sql": "node scripts/check-sql.mjs",
+    "db:bundle": "node scripts/build-schema.mjs && node scripts/check-sql.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

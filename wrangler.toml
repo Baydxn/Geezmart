@@ -1,18 +1,30 @@
-﻿#:schema node_modules/wrangler/config-schema.json
-# Cloudflare Pages configuration for GEEZMART.
+#:schema node_modules/wrangler/config-schema.json
+# GEEZMART -- Cloudflare Pages.
 #
-# IMPORTANT: this project is deployed through Cloudflare PAGES (Git integration),
-# NOT the Workers runtime. Set the dashboard fields to:
-#   Build command:      npm run build
-#   Build output dir:   dist
-#   Deploy command:     (leave EMPTY)
-# If a deploy command IS set, it must be "npx wrangler pages deploy dist"
-# -- plain "npx wrangler deploy" targets Workers and fails with
-# "Missing entry-point to Worker script".
+# The dashboard runs "npx wrangler deploy" after the build. On a Pages project
+# that targets the Workers runtime and fails with
+#   "Missing entry-point to Worker script or to assets directory".
+#
+# Declaring the assets directory below makes that command valid too, so the
+# deployment succeeds whether or not the dashboard field is corrected.
+#
+# PREFERRED dashboard settings (Workers & Pages -> your project -> Settings ->
+# Builds & deployments):
+#   Build command:            npm run build
+#   Build output directory:   dist
+#   Deploy command:           (leave EMPTY)
+#
+# See docs/DEPLOY.md for the full walkthrough.
 
 name = "geezmart"
 compatibility_date = "2025-01-01"
 pages_build_output_dir = "dist"
+
+# Static SPA assets. Vite emits plain files, so there is no Worker script to
+# run -- assets alone are sufficient and are served with the SPA fallback
+# configured in public/_redirects.
+[assets]
+directory = "./dist"
 
 [build]
 command = "npm run build"
