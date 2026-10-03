@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Static sanity checks for the Supabase migrations.
  *
  * This is NOT a Postgres parser. It catches the failure modes that are easy to
@@ -163,6 +163,89 @@ for (const file of [...files, '../seed.sql']) {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Statement ORDER check: a column must exist before it is referenced.
+// Catches the "column X does not exist" class of runtime failure, e.g. an index
+// on a column added by a later ALTER TABLE.
+// ---------------------------------------------------------------------------
+// Build the column map from CREATE TABLE bodies ONLY. Columns introduced by a
+// later ALTER TABLE must NOT be seeded here, otherwise this check can never
+// detect the very bug it exists to catch.
+const TYPE_RE = /^\s*([a-z_][a-z0-9_]*)\s+(?:text|uuid|bool(ean)?|int(eger)?|bigint|smallint|numeric|decimal|real|double|date|time|timestamptz|timestamp|jsonb?|bytea|text\[\]|public\.)/i;
+
+function columnsFromCreateTable(stmt) {
+  const cols = new Set();
+  const open = stmt.indexOf('(');
+  if (open === -1) return cols;
+  const body = stmt.slice(open + 1);
+  for (const part of body.split(',')) {
+    const m = TYPE_RE.exec(part);
+    if (m) cols.add(m[1].toLowerCase());
+  }
+  return cols;
+}
+
+const orderProblems = [];
+const colsAt = new Map();
+
+function checkStatementOrder(fileName, stmt) {
+  // 1. ALTER TABLE ... ADD COLUMN declares a column up-front.
+  const addCol = /^alter\s+table\s+(?:public\.)?(\w+)\s+add\s+column\s+(?:if\s+not\s+exists\s+)?(\w+)/i.exec(stmt);
+  if (addCol) {
+    const t = addCol[1].toLowerCase();
+    if (!colsAt.has(t)) colsAt.set(t, new Set());
+    colsAt.get(t).add(addCol[2].toLowerCase());
+    return;
+  }
+
+  // 2a. CREATE TABLE establishes the columns available from that point on.
+  const create = /^create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?(\w+)/i.exec(stmt);
+  if (create) {
+    const t = create[1].toLowerCase();
+    if (!colsAt.has(t)) colsAt.set(t, columnsFromCreateTable(stmt));
+    return;
+  }
+
+  // 2b. An index may only reference columns created SO FAR.
+  const target = /^create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?\w+\s+on\s+(?:public\.)?(\w+)\s*\(([^)]+)\)/i.exec(stmt);
+  if (!target) return;
+
+  const table = target[1].toLowerCase();
+  if (table === 'auth.users') return;
+
+  const known = colsAt.get(table);
+  if (!known) return;
+
+  for (const rawCol of target[2].split(',')) {
+    // Only a bare leading identifier is a column reference. This skips
+    // type specs like numeric(12,2), and table-level CONSTRAINT / UNIQUE /
+    // PRIMARY KEY / FOREIGN KEY / CHECK clauses.
+    // Index columns are bare identifiers with no type, e.g.
+    //   (featured, sort_order_hint)   or   gin (name gin_trgm_ops)
+    // so take the leading word, ignoring index-method keywords and functions.
+    const ident = /^\s*([a-z_][a-z0-9_]*)/i.exec(rawCol);
+    if (!ident) continue;
+    const col = ident[1].toLowerCase();
+    if (/^(select|from|where|on|using|asc|desc|nulls|first|last|gist|gin|b-tree|brin)$/.test(col)) continue;
+    if (!known.has(col)) {
+      orderProblems.push(
+        `${fileName}: "${table}.${col}" is referenced before it is created ` +
+        `(add it with ALTER TABLE ... ADD COLUMN ${col}) -- Postgres will fail with 42703`,
+      );
+    }
+  }
+}
+
+for (const file of files) {
+  const path = join(dir, file);
+  const name = file;
+  for (const stmt of statements(name, readFileSync(path, 'utf8'))) {
+    checkStatementOrder(name, stmt);
+  }
+}
+
+for (const p of orderProblems) errors.push(p);
 
 // Cross-check seed INSERT columns against the schema.
 const seed = normalise(readFileSync(seedFile, 'utf8'));

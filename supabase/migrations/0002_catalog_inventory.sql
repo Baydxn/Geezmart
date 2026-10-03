@@ -119,14 +119,14 @@ create index if not exists products_category_idx   on public.products (category_
 create index if not exists products_subcategory_idx on public.products (subcategory_id);
 create index if not exists products_brand_idx      on public.products (brand_id);
 create index if not exists products_price_idx      on public.products (price);
+
+alter table public.products
+  add column if not exists sort_order_hint int not null default 0;
+
 create index if not exists products_featured_idx   on public.products (featured, sort_order_hint);
 create index if not exists products_name_trgm      on public.products using gin (name gin_trgm_ops);
 create index if not exists products_search_trgm
   on public.products using gin ((name || ' ' || short_description) gin_trgm_ops);
-
--- Display ordering hint used by admin "sort_order" columns.
-alter table public.products
-  add column if not exists sort_order_hint int not null default 0;
 
 -- ---------------------------------------------------------------------------
 -- Product images (ordered, one primary)
