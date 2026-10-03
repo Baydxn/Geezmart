@@ -1,26 +1,73 @@
-import type { Category, CategoryId, Filters, Product, SortKey } from '../types';
-import { categories } from '../data/categories';
-import { products } from '../data/products';
-
 /**
- * API-ready service layer.
+ * Storefront query layer.
  *
- * Every screen talks to this module instead of importing the raw arrays, so a
- * real backend can be dropped in later by swapping these bodies for `fetch`
- * calls without touching any component.
- *
- * The simulated latency exists so skeleton loaders are exercised in the UI.
+ * Every screen reads through these helpers, and they all read from the shared
+ * control-plane database - so an admin edit (price, stock, status, category)
+ * is reflected for customers immediately, with no reload and no page-specific
+ * wiring. Replacing these bodies with `fetch` is the whole backend migration.
  */
-const LATENCY = 180;
+import type {
+  CategoryId,
+  Filters,
+  SortKey,
+  Product,
+  VisualKind,
+} from '../types';
+import type { AdminCategory, AdminProduct, HomepageSection } from '../types/admin';
+import { store, visibleProducts, activePrice, availableStock, activeBanners, homepageSections } from './db';
 
+const LATENCY = 140;
 const wait = <T,>(value: T, ms = LATENCY): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
-export interface QueryOptions {
-  filters?: Partial<Filters>;
-  sort?: SortKey;
-  limit?: number;
+/* ------------------------------ mapping ------------------------------ */
+
+/** Admin record -> storefront product shape. */
+export function toProduct(record: AdminProduct): Product {
+  const price = activePrice(record);
+  return {
+    id: record.id,
+    slug: record.seo.slug || record.id,
+    name: record.name,
+    brand: record.brand,
+    categoryId: record.categoryId as CategoryId,
+    subcategoryId: record.subcategoryId,
+    blurb: record.blurb,
+    description: record.description,
+    price,
+    compareAtPrice: price < record.price ? record.price : undefined,
+    currency: store.read().settings.currencySymbol,
+    rating: 0,
+    reviewCount: 0,
+    stock: availableStock(record),
+    visual: record.visual as VisualKind,
+    image: record.images.find((i) => i.primary)?.url ?? record.images[0]?.url,
+    gallery: record.images.map((i) => i.url),
+    colors: record.variants[0]?.options.map((label, i) => ({
+      id: `${record.id}-${i}`,
+      label,
+      hex: i === 0 ? '#c7ccd3' : '#1b2434',
+    })) ?? [{ id: `${record.id}-0`, label: 'Standard', hex: '#c7ccd3' }],
+    tags: [record.brand.toLowerCase(), record.categoryId, ...record.name.toLowerCase().split(/\s+/)],
+    badges: record.status === 'coming_soon' ? ['Coming Soon'] : [],
+    collections: {},
+    createdAt: record.createdAt,
+    popularity: Math.round(record.stock + record.price / 1000),
+  };
 }
+
+export function toCategory(record: AdminCategory) {
+  return {
+    id: record.id as CategoryId,
+    name: record.name,
+    slug: record.slug,
+    icon: record.icon,
+    tagline: record.tagline,
+    subcategories: record.subcategories,
+  };
+}
+
+/* ------------------------------ queries ------------------------------ */
 
 export const DEFAULT_FILTERS: Filters = {
   categoryIds: [],
@@ -32,7 +79,6 @@ export const DEFAULT_FILTERS: Filters = {
   maxPrice: null,
 };
 
-/** Canonical blank filter state reused by the shop page and filter sheet. */
 export const emptyFilters: Filters = DEFAULT_FILTERS;
 
 export function activeFilterCount(f: Filters): number {
@@ -54,6 +100,14 @@ const SORTERS: Record<SortKey, (a: Product, b: Product) => number> = {
   popular: (a, b) => b.reviewCount - a.reviewCount,
 };
 
+export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'recommended', label: 'Recommended' },
+  { key: 'newest', label: 'Newest' },
+  { key: 'price-asc', label: 'Price: Low → High' },
+  { key: 'price-desc', label: 'Price: High → Low' },
+  { key: 'popular', label: 'Most Popular' },
+];
+
 export function sortProducts(list: Product[], sort: SortKey = 'recommended'): Product[] {
   return [...list].sort(SORTERS[sort] ?? SORTERS.recommended);
 }
@@ -72,22 +126,34 @@ export function applyFilters(list: Product[], filters: Partial<Filters>): Produc
   });
 }
 
-export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'recommended', label: 'Recommended' },
-  { key: 'newest', label: 'Newest' },
-  { key: 'price-asc', label: 'Price: Low → High' },
-  { key: 'price-desc', label: 'Price: High → Low' },
-  { key: 'popular', label: 'Most Popular' },
-];
-
-/* ------------------------------ Queries ------------------------------ */
-
-export async function listCategories(): Promise<Category[]> {
-  return wait(categories);
+/** Collections are derived from the admin record so homepage picks stay live. */
+function collectionOf(record: AdminProduct): Product['collections'] {
+  const now = Date.now();
+  const age = now - new Date(record.createdAt).getTime();
+  return {
+    featured: record.stock > 8 && record.price < 200000,
+    newDrop: age < 120 * 86_400_000,
+    trending: record.stock < 60 && record.stock > 0,
+    menPick: ['fashion', 'grooming', 'accessories', 'watches'].includes(record.categoryId),
+  };
 }
 
-export async function listProducts(options: QueryOptions = {}): Promise<Product[]> {
-  const filtered = applyFilters(products, options.filters ?? {});
+function withCollections(records: AdminProduct[]): Product[] {
+  return records.map((r) => ({ ...toProduct(r), collections: collectionOf(r) }));
+}
+
+export async function listCategories() {
+  return wait(store.read().categories.filter((c) => !c.hidden).sort((a, b) => a.order - b.order).map(toCategory));
+}
+
+export async function getCategory(id: string) {
+  const record = store.read().categories.find((c) => c.id === id);
+  return wait(record ? toCategory(record) : undefined);
+}
+
+export async function listProducts(options: { filters?: Partial<Filters>; sort?: SortKey; limit?: number } = {}) {
+  const all = withCollections(visibleProducts());
+  const filtered = applyFilters(all, options.filters ?? {});
   const sorted = sortProducts(filtered, options.sort);
   return wait(options.limit ? sorted.slice(0, options.limit) : sorted);
 }
@@ -96,40 +162,42 @@ export async function listCollection(
   key: keyof Product['collections'],
   limit = 6,
 ): Promise<Product[]> {
-  return wait(sortProducts(products.filter((p) => p.collections[key])).slice(0, limit));
+  return wait(
+    withCollections(visibleProducts())
+      .filter((p) => p.collections[key])
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(0, limit),
+  );
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  return wait(products.find((p) => p.slug === slug));
-}
-
-export async function getProductById(id: string): Promise<Product | undefined> {
-  return wait(products.find((p) => p.id === id));
+  const record = store.read().products.find((p) => (p.seo.slug || p.id) === slug);
+  if (!record || (record.status !== 'published' && record.status !== 'out_of_stock')) return wait(undefined);
+  return wait({ ...toProduct(record), collections: collectionOf(record) });
 }
 
 export async function listRelated(product: Product, limit = 6): Promise<Product[]> {
   return wait(
-    products
+    withCollections(visibleProducts())
       .filter((p) => p.id !== product.id && p.categoryId === product.categoryId)
       .slice(0, limit),
   );
 }
 
 export function listBrands(): string[] {
-  return [...new Set(products.map((p) => p.brand))].sort();
+  return [...new Set(store.read().products.map((p) => p.brand))].sort();
 }
 
-export function priceBounds(): { min: number; max: number } {
-  const prices = products.map((p) => p.price);
+export function priceBounds() {
+  const prices = store.read().products.map((p) => activePrice(p));
   return { min: Math.min(...prices), max: Math.max(...prices) };
 }
 
-/** Lightweight fuzzy-ish search used by the search overlay and shop page. */
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return wait([]);
   const terms = q.split(/\s+/);
-  const scored = products
+  const scored = withCollections(visibleProducts())
     .map((product) => {
       const name = product.name.toLowerCase();
       const brand = product.brand.toLowerCase();
@@ -149,27 +217,51 @@ export async function searchProducts(query: string): Promise<Product[]> {
   return wait(scored);
 }
 
-/** Category names matching a query — powers the "Categories" tab in search. */
-export async function searchCategories(query: string): Promise<Category[]> {
+export async function searchCategories(query: string) {
   const q = query.trim().toLowerCase();
-  if (!q) return wait(categories);
+  if (!q) return wait(store.read().categories.filter((c) => !c.hidden).map(toCategory));
   return wait(
-    categories.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.subcategories.some((s) => s.name.toLowerCase().includes(q)),
-    ),
+    store
+      .read()
+      .categories.filter(
+        (c) =>
+          !c.hidden &&
+          (c.name.toLowerCase().includes(q) || c.subcategories.some((s) => s.name.toLowerCase().includes(q))),
+      )
+      .map(toCategory),
   );
 }
 
-export const POPULAR_SEARCHES = [
-  'watch',
-  'earbuds',
-  'sneakers',
-  'iphone',
-  'grooming',
-  'speaker',
-  'couch',
-];
+export const POPULAR_SEARCHES = ['watch', 'earbuds', 'sneakers', 'iphone', 'grooming', 'speaker', 'couch'];
+
+/* ------------------------- homepage composition ------------------------- */
+
+export interface StorefrontHome {
+  banners: ReturnType<typeof bannerToSlide>[];
+  sections: HomepageSection[];
+}
+
+function bannerToSlide(b: ReturnType<typeof activeBanners>[number]) {
+  return {
+    id: b.id,
+    eyebrow: b.eyebrow,
+    title: b.headline,
+    highlight: b.subheadline,
+    subtitle: b.ctaText,
+    cta: b.ctaText,
+    to: b.ctaHref,
+    visual: b.visual as VisualKind,
+    tint: b.tint,
+    image: b.desktopImage,
+  };
+}
+
+export async function listHomeSections(): Promise<HomepageSection[]> {
+  return wait(homepageSections());
+}
+
+export async function listHeroSlides() {
+  return wait(activeBanners().map(bannerToSlide));
+}
 
 export type { CategoryId };

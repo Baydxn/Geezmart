@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Render-time smoke test.
  *
  * Renders every route through React's SSR renderer and fails loudly if any
@@ -24,6 +24,9 @@ const ROUTES = [
   '/checkout',
   '/order-confirmed/o-1001',
   '/orders',
+  '/tracking/GZ-000001',
+  '/admin/login',
+  '/admin',
   '/account',
   '/definitely-not-a-page',
 ];

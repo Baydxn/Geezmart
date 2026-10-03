@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icon, { type IconName } from './Icon';
 import Logo from './Logo';
+import SupabaseBadge from './SupabaseBadge';
 import { categories } from '../data/categories';
 
 const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
@@ -24,6 +25,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: 'My Orders', to: '/orders' },
       { label: 'My Account', to: '/account' },
       { label: 'Cart', to: '/cart' },
+      { label: 'Track an order', to: '/tracking/GZ-000001' },
       { label: 'Help & Support', to: '/account' },
       { label: 'Settings', to: '/account' },
     ],
@@ -74,7 +76,10 @@ export default function Footer() {
       </div>
 
       <div className="footer-base">
-        <span>&copy; {new Date().getFullYear()} GEEZMART. All rights reserved.</span>
+        <span className="row" style={{ gap: 10 }}>
+          <span>&copy; {new Date().getFullYear()} GEEZMART. All rights reserved.</span>
+          <SupabaseBadge compact />
+        </span>
         <span className="row" style={{ gap: 14 }}>
           <Link to="/account">Privacy</Link>
           <Link to="/account">Terms</Link>

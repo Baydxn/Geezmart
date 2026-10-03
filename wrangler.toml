@@ -1,0 +1,16 @@
+﻿#:schema node_modules/wrangler/config-schema.json
+# Cloudflare Pages configuration for GEEZMART
+# Connect this repo in the Cloudflare dashboard with:
+#   Build command:    npm run build
+#   Build output dir: dist
+#   Environment vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+name = "geezmart"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"
+
+[build]
+command = "npm run build"
+
+# Vars are read from the Cloudflare dashboard (Settings -> Environment variables).
+# Do NOT put a service-role key here; that belongs in a Worker with secrets.

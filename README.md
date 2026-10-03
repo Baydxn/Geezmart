@@ -1,84 +1,115 @@
 ﻿# GEEZMART
 
-Premium men&apos;s lifestyle, technology, fashion and home marketplace — a mobile-first
-React storefront built around a black / white / charcoal design language with soft
-bubble-shaped UI, cinematic hero imagery and restrained spring motion.
+**Storefront + Control Center.** A premium men's lifestyle marketplace (black / white / charcoal,
+bubble-shaped UI) paired with a full admin panel mounted at `/admin` on the same domain.
 
-> **Logo note** — the supplied logo image was not present in this workspace, so the
-> wordmark is rendered as a faithful white bubble-letter SVG in
-> [`src/components/Logo.tsx`](src/components/Logo.tsx). To drop in the official
-> asset, save it as `public/brand/geezmart-logo.png` and flip `USE_IMAGE_MARK`
-> to `true` in that single file — nothing else changes.
+- Customer site: `https://geezmart.com/`
+- Admin panel: `https://geezmart.com/admin`
 
-## Getting started
+## Quick start
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # tsc -b + production bundle
-npm run preview      # serve the production build
-npm run lint         # oxlint
-npm run check:smoke  # render every route through SSR to catch runtime errors
+npm run dev        # http://localhost:5173  (admin at /admin)
+npm run build      # tsc -b + production bundle
+npm run lint       # oxlint
+npm run check:smoke# SSR-renders all 15 routes to catch runtime errors
 ```
+
+### Admin sign-in (demo)
+
+| Email | Role |
+| --- | --- |
+| `admin@geezmart.ng` | Super Admin |
+| `manager@geezmart.ng` | Product Manager |
+| `orders@geezmart.ng` | Order Manager |
+
+Password for all demo accounts: `GEEZMART2024!`
+
+Passwords are stored as **PBKDF2-SHA256 (120k iterations, per-user salt)** hashes and verified in
+`src/admin/auth.ts`. Plaintext is never persisted, displayed or transmitted.
 
 ## Architecture
 
 ```
 src/
-  components/      Reusable UI (TopNav, BottomNav, ProductCard, CartDrawer, ...)
-  pages/           Route screens (lazy-loaded)
-  store/           Context providers: Cart, Wishlist, Orders, Toast, UI
-  data/            Category tree + demo catalogue (the only place products live)
+  admin/                 Control center (same design language, denser layout)
+    AdminRoutes.tsx      /admin routes + auth + per-role permission guards
+    auth.ts             PBKDF2 hashing, sessions, login rate limiting
+    AdminContext.tsx    useAdminAuth + useDbVersion (re-renders on data changes)
+    components/         AdminShell, DataTable, SalesChart, RichTextEditor,
+                        ImageUploader, SeoEditor, Modal/ConfirmDialog, ui kit
+    pages/              dashboard, products, product form, categories, orders,
+                        customers, inventory, coupons, reviews, homepage,
+                        banners, pages, media, analytics, activity, settings, login
+  pages/                Customer storefront screens
+  components/           Storefront UI (header, bottom nav, cards, drawers, ...)
+  store/                Cart, Wishlist, Orders, Toast, UI contexts
+  data/                 seed + categories + demo products + helpers
   lib/
-    api.ts         API-ready service layer (swap for fetch without touching UI)
-    productImage.ts  Deterministic SVG "studio shots" used until real photos exist
-    shapes.ts      Metallic product silhouettes for those generated visuals
-    format.ts      Currency / date / order-reference helpers
-  styles/          Design tokens + component CSS (no utility framework)
-  types/           Domain contracts shared by every layer
+    db.ts               THE CONTROL PLANE - one shared, reactive data document
+    api.ts              Storefront query layer (reads the control plane)
+    supabase.ts         Supabase client, connection probe, realtime, schema SQL
+    productImage.ts     Generated cinematic product visuals
+  styles/               Design tokens + component CSS (incl. admin.css)
 ```
 
-### Data-driven by design
-No screen hard-codes products. Everything flows from `src/data/products.ts` through
-`src/lib/api.ts`, which exposes async, filter/sort/search-aware queries. The
-simulated ~180ms latency is deliberate: it exercises the skeleton loaders and
-mirrors the shape a real `/api/products` client would return. To move to a backend,
-replace the bodies of the functions in `api.ts` — components stay untouched.
+### The control plane (`src/lib/db.ts`)
 
-### Adding products
-Append an entry to `products` in `src/data/products.ts`. Set `image` and `gallery`
-to real URLs and they replace the generated visuals automatically. Collections
-(`featured`, `newDrop`, `trending`, `menPick`) drive the homepage sections.
+Both halves of the app read and write **one** document through `store.read()` / `store.write()`:
 
-### Adding categories
-Append to `categories` in `src/data/categories.ts`. Category shortcuts, the
-expanding category menu, the shop filter sheet and search all read from that array.
+- Change a price in `/admin/products` → the storefront shows the new price immediately
+- Hide a product → it disappears from home, shop, search and category pages
+- Reorder homepage sections → the customer homepage renders in the new order
+- Change an order status → `/tracking/:id` updates instantly
 
-## Key features
+`store.subscribe()` powers the `useDbVersion()` hook, so every screen re-renders the moment data
+changes — no page reload, no stale cache.
 
-- **Header** — centred GEEZMART wordmark, circular account / search / cart actions,
-  glass blur on scroll, animated cart badge and ripple feedback.
-- **Hero carousel** — autoplay with progress bar, swipe, drag, arrows and dots.
-- **Category expansion** — bubble shortcuts open a spring-animated panel of
-  subcategories; selecting another category collapses the previous one.
-- **Product detail** — swipeable gallery with thumbnails, colour variants,
-  quantity, benefits, animated accordions and related products.
-- **Cart** — bottom drawer on mobile / right drawer on desktop, live totals,
-  animated quantity and price transitions, empty state.
-- **Checkout** — four animated steps (Delivery, Shipping, Payment, Review) with a
-  progress indicator, validation and a spring transition between steps.
-- **Order confirmation** — animated SVG checkmark draw, order reference, tracking.
-- **Search** — full-screen overlay with recent + popular searches, live product and
-  category results, and deep links into the shop page.
-- **Shop** — horizontal category chips, bottom-sheet filters, sort sheet, 2/3/4
-  column responsive grid.
-- **Orders** — active / completed / cancelled tabs with an animated delivery tracker.
-- **Account / Wishlist** — profile menu, saved products with heart animation.
-- **Toasts** — premium pill notifications; no `alert()` anywhere.
+**To connect a real backend**, replace the bodies of the helpers in `db.ts` / `api.ts` with your
+API calls. No component changes required.
 
-## Accessibility & performance
+## Supabase
 
-Semantic landmarks, skip link, labelled controls, `aria-expanded` / `aria-pressed`
-state, visible focus rings, keyboard-operable quantity and filter controls,
-`prefers-reduced-motion` support, lazy route chunks, lazy images, memoised cards
-and skeleton loading instead of blank screens.
+Set these in `.env` (local) and in the Cloudflare dashboard (production):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://ahijotxtncavfnhohxrw.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ufmCHhZ8c4NW58NpMsn-kQ_uAOZdqLM
+```
+
+- `src/lib/supabase.ts` creates the client, probes the connection, exposes realtime helpers and
+  exports `SUPABASE_SCHEMA_SQL` (tables + RLS policies) to run once in the SQL editor.
+- The app **degrades gracefully**: without credentials the local control plane keeps every screen
+  working, so a fresh clone runs with zero setup.
+- Admin → Settings → Backend shows live connection status and a "copy SQL" button.
+- Only *publishable* keys belong here. Service-role keys stay in Cloudflare secrets / Pages Functions.
+
+## Deploying to Cloudflare Pages
+
+The repo is already connected. Required settings:
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node version | `20` or newer (env var `NODE_VERSION=20`) |
+| Env vars | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
+
+Supporting files already committed:
+
+- `wrangler.toml` — Pages config (`pages_build_output_dir = "dist"`)
+- `public/_redirects` — SPA fallback so deep links like `/admin/products` work on refresh
+- `public/_headers` — security headers + immutable asset caching
+- `build` script wraps the bundler with `NODE_OPTIONS=--max-old-space-size=4096` via `cross-env`,
+  which fixes the heap-exhaustion failure Cloudflare was showing
+
+## Security notes
+
+- Admin routes are guarded (`RequireAuth`) and section access is role-gated (`RequirePermission`).
+  **The frontend guards are UX only — mirror every check in your API.**
+- Login is rate limited with lockout; sessions are short-lived tokens in sessionStorage (or
+  localStorage with "remember me"), never passwords.
+- Cost prices, margin figures and customer notes never render on the storefront.
+- Uploaded files are validated by type and size before they enter the library.
+- Secrets are referenced by env-var name only (`PAYMENT_CARD_SECRET_KEY`); never stored client-side.

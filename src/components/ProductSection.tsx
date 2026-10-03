@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon';
 import ProductGrid, { ProductGridSkeleton } from './ProductGrid';
+import ProductCard from './ProductCard';
 import { listCollection } from '../lib/api';
 import type { Product } from '../types';
 
@@ -14,6 +15,11 @@ interface ProductSectionProps {
 }
 
 /** Homepage merchandising block: skeleton while loading, then a product grid. */
+/** Single product tile used by custom homepage sections. */
+export function SingleProduct({ product }: { product: Product }) {
+  return <ProductCard product={product} />
+}
+
 export default function ProductSection({
   collection,
   title,

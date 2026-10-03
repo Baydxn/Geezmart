@@ -25,3 +25,10 @@ dist-ssr
 
 dist-ssm
 *.log
+
+# Local env (never commit secrets)
+.env
+.env.local
+.env.*.local
+.dev.vars
+!.env.example

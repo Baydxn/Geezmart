@@ -1,12 +1,15 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import HeroCarousel from '../components/HeroCarousel';
+import HeroCarousel, { type HeroSlide } from '../components/HeroCarousel';
 import CategoryMenu from '../components/CategoryMenu';
-import ProductSection from '../components/ProductSection';
+import ProductSection, { SingleProduct } from '../components/ProductSection';
 import Icon, { type IconName } from '../components/Icon';
 import { HeroSkeleton, CategorySkeleton } from '../components/Skeletons';
-import { useEffect, useState } from 'react';
-import { listCategories } from '../lib/api';
-import type { Category } from '../types';
+import { listHeroSlides, listHomeSections, listProducts } from '../lib/api';
+import { store } from '../lib/db';
+import { useDbVersion } from '../admin/AdminContext';
+import type { Product } from '../types';
+import type { HomepageSection } from '../types/admin';
 
 const TRUST: { icon: IconName; label: string }[] = [
   { icon: 'shield', label: '100% Original' },
@@ -16,92 +19,165 @@ const TRUST: { icon: IconName; label: string }[] = [
 ];
 
 export default function Home() {
-  const [ready, setReady] = useState(false);
-  const [showCategories, setShowCategories] = useState<Category[]>([]);
+  useDbVersion();
+  const [slides, setSlides] = useState<HeroSlide[] | null>(null);
+  const [sections, setSections] = useState<HomepageSection[] | null>(null);
+  const [customProducts, setCustomProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     let active = true;
-    listCategories().then((cats) => {
+    void Promise.all([listHeroSlides(), listHomeSections()]).then(([banners, home]) => {
       if (!active) return;
-      setShowCategories(cats);
-      setReady(true);
+      setSlides(banners);
+      setSections(home);
     });
     return () => {
       active = false;
     };
   }, []);
 
+  // Custom homepage sections pin specific products chosen in the admin panel.
+  useEffect(() => {
+    const pinned = (sections ?? []).flatMap((s) => s.productIds);
+    if (!pinned.length) return;
+    let active = true;
+    void listProducts().then((all) => {
+      if (!active) return;
+      setCustomProducts(all.filter((p) => pinned.includes(p.id)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [sections]);
+
+  const currency = store.read().settings.currencySymbol;
+
+  const customGrid = useMemo(() => {
+    if (!sections) return [];
+    return sections
+      .filter((s) => s.type === 'products' && s.collection === 'custom' && s.enabled)
+      .map((section) => ({
+        section,
+        products: customProducts.filter((p) => section.productIds.includes(p.id)).slice(0, 6),
+      }))
+      .filter((entry) => entry.products.length > 0);
+  }, [sections, customProducts]);
+
   return (
     <>
-      {ready ? <HeroCarousel /> : <HeroSkeleton />}
-
-      <section className="section" aria-label="Shop by category">
-        <div className="section-head">
-          <div>
-            <p className="section-kicker">Explore</p>
-            <h2 className="section-title">Shop by Category</h2>
-          </div>
-          <Link className="link-more" to="/categories">
-            All Categories
-            <Icon name="arrowRight" size={15} />
-          </Link>
+      {slides?.length ? (
+        <HeroCarousel slides={slides} />
+      ) : slides?.length === 0 ? (
+        <div className="promo" style={{ minHeight: 200, display: 'grid', placeItems: 'center' }}>
+          <p className="text-3 t-sm">No published banners yet — add one in Admin → Banners.</p>
         </div>
-        {showCategories.length ? (
+      ) : (
+        <HeroSkeleton />
+      )}
+
+      {(sections ?? []).some((s) => s.type === 'categories' && s.enabled) ? (
+        <section className="section" aria-label="Shop by category">
+          <div className="section-head">
+            <div>
+              <p className="section-kicker">Explore</p>
+              <h2 className="section-title">Shop by Category</h2>
+            </div>
+            <Link className="link-more" to="/categories">
+              All Categories
+              <Icon name="arrowRight" size={15} />
+            </Link>
+          </div>
           <CategoryMenu />
-        ) : (
-          <CategorySkeleton count={6} />
-        )}
-      </section>
+        </section>
+      ) : null}
 
-      <ProductSection collection="featured" kicker="Curated" title="Featured" />
-      <ProductSection collection="newDrop" kicker="Just In" title="New Drops" viewAll="/shop?sort=newest" />
-      <ProductSection collection="trending" kicker="Moving Fast" title="Trending" viewAll="/shop?sort=popular" />
-      <ProductSection collection="menPick" kicker="For Him" title="Men's Picks" viewAll="/shop?collection=menPick" />
+      {(sections ?? []).map((section) => {
+        if (!section.enabled) return null;
 
-      <section className="section">
-        <div className="promo metal-edge">
-          <div className="promo-inner">
-            <p className="section-kicker">GEEZMART Membership</p>
-            <h2>Premium access, before everyone else.</h2>
-            <p className="text-2 t-md">
-              Early drops, private pricing and free express delivery on every order over ₦250,000.
-              Membership is free and takes seconds to activate.
-            </p>
-            <div className="promo-stats">
-              <div className="promo-stat">
-                <b>24h</b>
-                <span>Express delivery</span>
+        if (section.type === 'products') {
+          if (section.collection === 'custom') return null; // rendered below in order
+          return (
+            <ProductSection
+              key={section.id}
+              collection={section.collection}
+              kicker={section.kicker}
+              title={section.title}
+              viewAll={section.ctaHref || '/shop'}
+            />
+          );
+        }
+
+        if (section.type === 'promo') {
+          return (
+            <section className="section" key={section.id}>
+              <div className="promo metal-edge">
+                <div className="promo-inner">
+                  <p className="section-kicker">{section.kicker}</p>
+                  <h2>{section.title}</h2>
+                  <p className="text-2 t-md">{section.description}</p>
+                  <div className="promo-stats">
+                    <div className="promo-stat">
+                      <b>24h</b>
+                      <span>Express delivery</span>
+                    </div>
+                    <div className="promo-stat">
+                      <b>2×</b>
+                      <span>Reward points</span>
+                    </div>
+                    <div className="promo-stat">
+                      <b>{currency}</b>
+                      <span>Free delivery over 250k</span>
+                    </div>
+                  </div>
+                  <div className="row" style={{ gap: 10, marginTop: 6 }}>
+                    <Link to={section.ctaHref || '/shop'} className="btn btn-primary btn-md">
+                      {section.ctaText || 'Start Shopping'}
+                      <Icon name="arrowRight" size={16} />
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <div className="promo-stat">
-                <b>2×</b>
-                <span>Reward points</span>
-              </div>
-              <div className="promo-stat">
-                <b>4.9</b>
-                <span>Average rating</span>
-              </div>
+            </section>
+          );
+        }
+
+        if (section.type === 'trust') {
+          return (
+            <div className="trust" key={section.id} aria-label={section.title || 'Why shop with GEEZMART'}>
+              {TRUST.map((item) => (
+                <div className="trust-item" key={item.label}>
+                  <Icon name={item.icon} size={18} />
+                  {item.label}
+                </div>
+              ))}
             </div>
-            <div className="row" style={{ gap: 10, marginTop: 6 }}>
-              <Link to="/shop" className="btn btn-primary btn-md">
-                Start Shopping
-                <Icon name="arrowRight" size={16} />
-              </Link>
-              <Link to="/account" className="btn btn-ghost btn-md">
-                Join Free
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+          );
+        }
 
-      <div className="trust" aria-label="Why shop with GEEZMART">
-        {TRUST.map((item) => (
-          <div className="trust-item" key={item.label}>
-            <Icon name={item.icon} size={18} />
-            {item.label}
+        return null;
+      })}
+
+      {customGrid.map(({ section, products }) => (
+        <section className="section" key={section.id}>
+          <div className="section-head">
+            <div>
+              {section.kicker ? <p className="section-kicker">{section.kicker}</p> : null}
+              <h2 className="section-title">{section.title}</h2>
+            </div>
+            <Link className="link-more" to={section.ctaHref || '/shop'}>
+              {section.ctaText || 'View All'}
+              <Icon name="arrowRight" size={15} />
+            </Link>
           </div>
-        ))}
-      </div>
+          <div className="product-grid">
+            {products.map((product) => (
+              <SingleProduct key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {!sections ? <CategorySkeleton count={6} /> : null}
     </>
   );
 }
