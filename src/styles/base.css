@@ -1,0 +1,163 @@
+/* ============================================================
+   GEEZMART — Design Tokens
+   Black · White · Charcoal · Subtle metallic gray
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --bg: #08090b;
+  --bg-elev: #0e1013;
+  --surface: #121418;
+  --surface-2: #171a1f;
+  --surface-3: #1e222a;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  /* Text */
+  --text: #ffffff;
+  --text-2: #a8adb6;
+  --text-3: #6f757e;
+
+  /* Accent = white only */
+  --accent: #ffffff;
+  --accent-ink: #08090b;
+  --metal: linear-gradient(135deg, #ffffff 0%, #b9bfc8 38%, #6d737c 62%, #e6e9ee 100%);
+
+  /* Radii — soft bubble shapes */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 26px;
+  --r-xl: 32px;
+  --r-2xl: 40px;
+  --r-pill: 999px;
+
+  /* Elevation / glow */
+  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  --shadow-lift: 0 24px 60px -20px rgba(0, 0, 0, 0.95);
+  --glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 40px -18px rgba(255, 255, 255, 0.2);
+
+  /* Layout */
+  --header-h: 60px;
+  --bottomnav-h: 68px;
+  --page-max: 1280px;
+  --gutter: 16px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 380ms;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+  isolation: isolate;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Sora', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.08;
+}
+
+h1 {
+  font-size: clamp(28px, 8.2vw, 46px);
+}
+h2 {
+  font-size: clamp(21px, 5.6vw, 30px);
+}
+h3 {
+  font-size: 17px;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+::selection {
+  background: #fff;
+  color: #000;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2e35;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3f48;
+}

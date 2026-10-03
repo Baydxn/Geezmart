@@ -1,0 +1,309 @@
+/* ============================================================
+   GEEZMART — Hero, categories, product cards, promo, footer
+   ============================================================ */
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: #0c0e11;
+  border: 1px solid var(--line);
+  isolation: isolate;
+}
+@media (min-width: 768px) {
+  .hero {
+    border-radius: var(--r-2xl);
+  }
+}
+
+.hero-viewport {
+  display: flex;
+  touch-action: pan-y;
+}
+.hero-slide {
+  position: relative;
+  flex: 0 0 100%;
+  min-height: 340px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+@media (min-width: 768px) {
+  .hero-slide {
+    min-height: 460px;
+  }
+}
+@media (min-width: 1200px) {
+  .hero-slide {
+    min-height: 520px;
+  }
+}
+
+.hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(8, 9, 11, 0.35) 0%, rgba(8, 9, 11, 0.55) 45%, rgba(8, 9, 11, 0.96) 100%),
+    linear-gradient(100deg, rgba(8, 9, 11, 0.92) 8%, rgba(8, 9, 11, 0.55) 55%, rgba(8, 9, 11, 0.15) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .hero-content {
+    padding: 44px;
+    max-width: 640px;
+    gap: 16px;
+  }
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  height: 28px;
+  padding: 0 13px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.hero-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.hero-title {
+  font-size: clamp(27px, 8.6vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+.hero-sub {
+  color: var(--text-2);
+  font-size: 14px;
+  max-width: 42ch;
+}
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* Dots */
+.hero-dots {
+  position: absolute;
+  z-index: 3;
+  bottom: 14px;
+  right: 18px;
+  display: flex;
+  gap: 7px;
+}
+@media (min-width: 768px) {
+  .hero-dots {
+    bottom: 26px;
+    right: 40px;
+  }
+}
+.hero-dot-btn {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.35);
+  transition: all var(--dur) var(--ease);
+}
+.hero-dot-btn[data-active='true'] {
+  width: 26px;
+  background: #fff;
+}
+
+.hero-progress {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: #fff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
+}
+
+.hero-arrows {
+  position: absolute;
+  z-index: 3;
+  bottom: 16px;
+  left: 18px;
+  display: none;
+  gap: 8px;
+}
+@media (min-width: 768px) {
+  .hero-arrows {
+    display: flex;
+    bottom: 26px;
+    left: 40px;
+  }
+}
+.hero-arrow {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: rgba(12, 14, 17, 0.7);
+  border: 1px solid var(--line-strong);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.hero-arrow:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.hero-arrow:active {
+  transform: scale(0.92);
+}
+
+/* ---------- CATEGORY SHORTCUTS ---------- */
+.cat-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px var(--gutter) 4px;
+  margin: 0 calc(var(--gutter) * -1);
+}
+.cat-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-bubble {
+  position: relative;
+  flex: 0 0 auto;
+  width: 88px;
+  height: 88px;
+  border-radius: var(--r-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  overflow: hidden;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.cat-bubble:hover {
+  border-color: var(--line-strong);
+}
+.cat-bubble:active {
+  transform: scale(0.94);
+}
+.cat-bubble[data-active='true'] {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+.cat-bubble-glyph {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.06);
+}
+.cat-bubble[data-active='true'] .cat-bubble-glyph {
+  background: rgba(0, 0, 0, 0.08);
+}
+.cat-bubble-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Expanding category panel */
+.cat-panel {
+  margin-top: 12px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  overflow: hidden;
+}
+.cat-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.cat-panel-title {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+.cat-panel-groups {
+  display: grid;
+  gap: 18px;
+  padding: 16px;
+}
+@media (min-width: 700px) {
+  .cat-panel-groups {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+}
+.cat-group-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.cat-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+  text-align: left;
+  transition: color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.cat-link:hover {
+  color: #fff;
+  transform: translateX(3px);
+}
+.cat-link svg {
+  opacity: 0.55;
+}

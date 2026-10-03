@@ -1,0 +1,359 @@
+/* ============================================================
+   GEEZMART — Promo, trust strip, footer
+   ============================================================ */
+
+.promo {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(600px 300px at 80% 0%, rgba(255, 255, 255, 0.1), transparent 60%),
+    linear-gradient(140deg, #14171b, #0a0b0e);
+  padding: 26px 22px;
+}
+@media (min-width: 768px) {
+  .promo {
+    padding: 46px 44px;
+  }
+}
+.promo-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+}
+.promo-stats {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.promo-stat b {
+  display: block;
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+}
+.promo-stat span {
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.trust {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 22px;
+}
+@media (min-width: 700px) {
+  .trust {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.trust-item svg {
+  flex: 0 0 auto;
+  color: #fff;
+}
+
+.footer {
+  margin-top: 48px;
+  border-top: 1px solid var(--line);
+  background: #0a0b0e;
+  padding: 40px var(--gutter) calc(var(--bottomnav-h) + 30px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 900px) {
+  .footer {
+    padding-bottom: 40px;
+  }
+}
+.footer-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+}
+@media (min-width: 700px) {
+  .footer-inner {
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+    gap: 36px;
+  }
+}
+.footer-col-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 12px;
+}
+.footer-link {
+  display: block;
+  padding: 5px 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+  transition:
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.footer-link:hover {
+  color: #fff;
+  transform: translateX(3px);
+}
+.footer-base {
+  max-width: var(--page-max);
+  margin: 26px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.socials {
+  display: flex;
+  gap: 8px;
+}
+.social-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  transition: all var(--dur-fast) var(--ease);
+}
+.social-btn:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+/* ============================================================
+   GEEZMART — Product card & grid
+   ============================================================ */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 700px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+@media (min-width: 1100px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+
+.p-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition:
+    transform var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.p-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-lift);
+}
+
+.p-card-media {
+  position: relative;
+  aspect-ratio: 1 / 1.04;
+  overflow: hidden;
+  background: #0d0f12;
+}
+.p-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease);
+}
+.p-card:hover .p-card-media img {
+  transform: scale(1.06);
+}
+
+.p-card-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  z-index: 2;
+}
+.p-badge {
+  height: 21px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(10, 11, 14, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  color: #fff;
+}
+.p-badge[data-tone='invert'] {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.p-card-fav {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: rgba(10, 11, 14, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.p-card-fav:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.p-card-fav:active {
+  transform: scale(0.88);
+}
+.p-card-fav[data-active='true'] {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.p-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 12px 14px;
+  flex: 1;
+}
+.p-card-cat {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.p-card-name {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+  min-height: 2.56em;
+}
+.p-card-desc {
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.4;
+  min-height: 2.8em;
+}
+.p-card-price {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+.p-card-price-old {
+  font-size: 11.5px;
+  color: var(--text-3);
+  text-decoration: line-through;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+.p-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.p-add {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-strong);
+  color: #fff;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.p-add:hover {
+  background: #fff;
+  color: #000;
+}
+.p-add:active {
+  transform: scale(0.88);
+}
+.p-add[data-state='added'] {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.stars {
+  display: inline-flex;
+  gap: 1.5px;
+  color: #fff;
+}
+.star-muted {
+  color: #3b3f47;
+}
+.rating-count {
+  font-size: 10.5px;
+  color: var(--text-3);
+}

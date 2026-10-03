@@ -1,0 +1,234 @@
+/* ============================================================
+   GEEZMART — Layout, controls & utilities
+   ============================================================ */
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1100px 620px at 50% -10%, rgba(255, 255, 255, 0.07), transparent 62%),
+    radial-gradient(760px 520px at 100% 8%, rgba(255, 255, 255, 0.035), transparent 60%),
+    var(--bg);
+}
+
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.page-pad {
+  padding-top: calc(var(--header-h) + 12px);
+  padding-bottom: calc(var(--bottomnav-h) + 34px + env(safe-area-inset-bottom, 0px));
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: center;
+}
+.spacer {
+  flex: 1;
+}
+
+/* Small layout helpers used where inline styles clash with Framer Motion */
+.inline-block {
+  display: inline-block;
+}
+.stack-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stack-8 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stack-14 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.stack-18 {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.center-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.clip {
+  overflow: hidden;
+}
+.origin-top {
+  transform-origin: top;
+}
+.mt-22 {
+  margin-top: 22px;
+}
+
+.section {
+  margin-top: 30px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 19px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.section-kicker {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.link-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  transition:
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.link-more:hover,
+.link-more:focus-visible {
+  color: #000;
+  background: #fff;
+  transform: translateX(2px);
+}
+.link-more:active {
+  transform: scale(0.96);
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--r-pill);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-sm {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+.btn-md {
+  height: 46px;
+  padding: 0 22px;
+  font-size: 14.5px;
+}
+.btn-lg {
+  height: 54px;
+  padding: 0 28px;
+  font-size: 15px;
+}
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  box-shadow: 0 10px 30px -14px rgba(255, 255, 255, 0.55);
+}
+.btn-primary:hover {
+  background: #eceef1;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  border-color: var(--line);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--line-strong);
+}
+
+.btn-outline {
+  background: transparent;
+  color: #fff;
+  border-color: var(--line-strong);
+}
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  transition:
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: var(--line-strong);
+}
+.icon-btn:active {
+  transform: scale(0.92);
+}
+.icon-btn-sm {
+  width: 34px;
+  height: 34px;
+}
