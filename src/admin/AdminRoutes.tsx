@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Admin routing + guards.
  * Routes live under /admin on the same domain as the storefront.
  */
@@ -17,6 +17,7 @@ const AdminOrders = lazy(() => import('./pages/AdminOrders'));
 const AdminOrderDetail = lazy(() => import('./pages/AdminOrders').then((m) => ({ default: m.AdminOrderDetail })));
 const AdminCustomers = lazy(() => import('./pages/AdminCustomers'));
 const AdminCustomerDetail = lazy(() => import('./pages/AdminCustomers').then((m) => ({ default: m.AdminCustomerDetail })));
+const AdminCheckouts = lazy(() => import('./pages/AdminCheckouts'));
 const AdminInventory = lazy(() => import('./pages/AdminInventory'));
 const AdminCoupons = lazy(() => import('./pages/AdminCoupons'));
 const AdminReviews = lazy(() => import('./pages/AdminReviews'));
@@ -86,6 +87,7 @@ export default function AdminRoutes() {
           <Route path="orders/:id" element={<Section permission="orders"><AdminOrderDetail /></Section>} />
           <Route path="customers" element={<Section permission="customers"><AdminCustomers /></Section>} />
           <Route path="customers/:id" element={<Section permission="customers"><AdminCustomerDetail /></Section>} />
+          <Route path="checkouts" element={<Section permission="checkouts"><AdminCheckouts /></Section>} />
           <Route path="inventory" element={<Section permission="inventory"><AdminInventory /></Section>} />
           <Route path="coupons" element={<Section permission="products"><AdminCoupons /></Section>} />
           <Route path="reviews" element={<Section permission="reviews"><AdminReviews /></Section>} />

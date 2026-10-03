@@ -27,6 +27,7 @@ const ROUTES = [
   '/tracking/GZ-000001',
   '/admin/login',
   '/admin',
+  '/admin/checkouts',
   '/account',
   '/definitely-not-a-page',
 ];

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GEEZMART Admin domain types.
  * These mirror the backend entities from the admin spec so the UI can be
  * pointed at a real API without redesign.
@@ -269,8 +269,8 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
   super_admin: ['*'],
   admin: ['*'],
   product_manager: ['products', 'categories', 'inventory', 'media', 'homepage', 'banners', 'reviews'],
-  order_manager: ['orders', 'inventory', 'customers'],
-  support: ['orders', 'customers', 'reviews'],
+  order_manager: ['orders', 'checkouts', 'inventory', 'customers'],
+  support: ['orders', 'checkouts', 'customers', 'reviews'],
 };
 
 export const ROLE_LABELS: Record<AdminRole, string> = {

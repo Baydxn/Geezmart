@@ -1,9 +1,14 @@
 ﻿#:schema node_modules/wrangler/config-schema.json
-# Cloudflare Pages configuration for GEEZMART
-# Connect this repo in the Cloudflare dashboard with:
-#   Build command:    npm run build
-#   Build output dir: dist
-#   Environment vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# Cloudflare Pages configuration for GEEZMART.
+#
+# IMPORTANT: this project is deployed through Cloudflare PAGES (Git integration),
+# NOT the Workers runtime. Set the dashboard fields to:
+#   Build command:      npm run build
+#   Build output dir:   dist
+#   Deploy command:     (leave EMPTY)
+# If a deploy command IS set, it must be "npx wrangler pages deploy dist"
+# -- plain "npx wrangler deploy" targets Workers and fails with
+# "Missing entry-point to Worker script".
 
 name = "geezmart"
 compatibility_date = "2025-01-01"

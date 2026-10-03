@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Icon from '../components/Icon';
@@ -7,6 +7,7 @@ import { useCart } from '../store/CartContext';
 import { useOrders } from '../store/OrdersContext';
 import { useToast } from '../store/ToastContext';
 import type { CheckoutForm, OrderLine, PaymentMethod } from '../types';
+import { saveCheckoutStep } from '../lib/supabase/storefront';
 
 const STEPS = ['Delivery', 'Shipping', 'Payment', 'Complete'] as const;
 
@@ -26,6 +27,17 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
+
+  // Opening checkout is itself a recovery signal.
+  useEffect(() => {
+    void saveCheckoutStep(1, {
+      fullName: form.name,
+      phone: form.phone,
+      email: form.email,
+    });
+    // Intentionally runs once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [form, setForm] = useState<CheckoutForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
   const [payment, setPayment] = useState<PaymentMethod>('card');
@@ -65,6 +77,17 @@ export default function Checkout() {
 
   const goNext = () => {
     if (step === 0 && !validateStep1()) return;
+    // Mirror this step into Postgres so it shows up in abandoned-cart recovery.
+    void saveCheckoutStep(step + 2, {
+      fullName: form.name,
+      phone: form.phone,
+      email: form.email,
+      address: form.address,
+      city: form.city,
+      state: form.state,
+      fulfilment: deliveryMethod,
+      payment,
+    });
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
 

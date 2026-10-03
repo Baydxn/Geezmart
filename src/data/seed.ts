@@ -91,6 +91,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     { id: 'nav_products', label: 'Products', href: '/admin/products', icon: 'box', hidden: false },
     { id: 'nav_categories', label: 'Categories', href: '/admin/categories', icon: 'grooming', hidden: false },
     { id: 'nav_orders', label: 'Orders', href: '/admin/orders', icon: 'orders', hidden: false },
+    { id: 'nav_checkouts', label: 'Abandoned Carts', href: '/admin/checkouts', icon: 'refresh', hidden: false },
     { id: 'nav_customers', label: 'Customers', href: '/admin/customers', icon: 'user', hidden: false },
     { id: 'nav_inventory', label: 'Inventory', href: '/admin/inventory', icon: 'shop', hidden: false },
     { id: 'nav_coupons', label: 'Coupons', href: '/admin/coupons', icon: 'gift', hidden: false },
