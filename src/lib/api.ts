@@ -1,10 +1,8 @@
 /**
  * Storefront query layer.
  *
- * Every screen reads through these helpers, and they all read from the shared
- * control-plane database - so an admin edit (price, stock, status, category)
- * is reflected for customers immediately, with no reload and no page-specific
- * wiring. Replacing these bodies with `fetch` is the whole backend migration.
+ * Fetches products and categories directly from Supabase when configured,
+ * falling back to local seed store.
  */
 import type {
   CategoryId,
@@ -15,6 +13,7 @@ import type {
 } from '../types';
 import type { AdminCategory, AdminProduct, HomepageSection } from '../types/admin';
 import { store, visibleProducts, activePrice, availableStock, activeBanners, homepageSections } from './db';
+import { supabase, isSupabaseConfigured } from './supabase/client';
 
 const LATENCY = 140;
 const wait = <T,>(value: T, ms = LATENCY): Promise<T> =>
@@ -22,7 +21,6 @@ const wait = <T,>(value: T, ms = LATENCY): Promise<T> =>
 
 /* ------------------------------ mapping ------------------------------ */
 
-/** Admin record -> storefront product shape. */
 export function toProduct(record: AdminProduct): Product {
   const price = activePrice(record);
   return {
@@ -126,8 +124,7 @@ export function applyFilters(list: Product[], filters: Partial<Filters>): Produc
   });
 }
 
-/** Collections are derived from the admin record so homepage picks stay live. */
-function collectionOf(record: AdminProduct): Product['collections'] {
+function collectionOf(record: { createdAt: string; stock: number; price: number; categoryId: string }): Product['collections'] {
   const now = Date.now();
   const age = now - new Date(record.createdAt).getTime();
   return {
@@ -143,15 +140,81 @@ function withCollections(records: AdminProduct[]): Product[] {
 }
 
 export async function listCategories() {
+  if (isSupabaseConfigured) {
+    const sb = supabase();
+    if (sb) {
+      const { data, error } = await sb.from('categories').select('*').eq('hidden', false).order('sort_order');
+      if (!error && data && data.length > 0) {
+        return data.map((c: any) => ({
+          id: c.slug as CategoryId,
+          name: c.name,
+          slug: c.slug,
+          icon: c.icon || 'shop',
+          tagline: c.tagline || '',
+          subcategories: Array.isArray(c.subcategories) ? c.subcategories : [],
+        }));
+      }
+    }
+  }
   return wait(store.read().categories.filter((c) => !c.hidden).sort((a, b) => a.order - b.order).map(toCategory));
 }
 
 export async function getCategory(id: string) {
-  const record = store.read().categories.find((c) => c.id === id);
-  return wait(record ? toCategory(record) : undefined);
+  const cats = await listCategories();
+  return wait(cats.find((c) => c.id === id || c.slug === id));
 }
 
 export async function listProducts(options: { filters?: Partial<Filters>; sort?: SortKey; limit?: number } = {}) {
+  if (isSupabaseConfigured) {
+    const sb = supabase();
+    if (sb) {
+      const { data, error } = await sb.from('storefront_catalog').select('*');
+      if (!error && data && data.length > 0) {
+        const mapped: Product[] = data.map((row: any) => {
+          const price = Number(row.price || 0);
+          const compareAt = row.compare_at_price ? Number(row.compare_at_price) : undefined;
+          const stock = Number(row.stock || 0);
+          const createdAt = row.created_at || new Date().toISOString();
+          const categoryId = (row.category_slug || 'all') as CategoryId;
+          const prod: Product = {
+            id: row.id,
+            slug: row.slug || row.id,
+            name: row.name,
+            brand: row.brand || 'Geezmart',
+            categoryId,
+            subcategoryId: row.subcategory || '',
+            blurb: row.short_description || '',
+            description: row.description || '',
+            price,
+            compareAtPrice: compareAt,
+            currency: '₦',
+            rating: Number(row.rating_avg || 0),
+            reviewCount: Number(row.rating_count || 0),
+            stock,
+            visual: 'watch',
+            image: row.images?.[0]?.url || '',
+            gallery: (row.images || []).map((i: any) => i.url),
+            colors: [{ id: `${row.id}-0`, label: 'Standard', hex: '#c7ccd3' }],
+            tags: [row.brand || '', row.category || '', ...row.name.toLowerCase().split(/\s+/)],
+            badges: row.is_new_drop ? ['New Drop'] : [],
+            collections: {
+              featured: Boolean(row.featured),
+              newDrop: Boolean(row.is_new_drop),
+              trending: Boolean(row.trending),
+              menPick: Boolean(row.mens_pick),
+            },
+            createdAt,
+            popularity: Number(row.rating_count || 0) * 10 + (row.featured ? 50 : 0),
+          };
+          return prod;
+        });
+        const filtered = applyFilters(mapped, options.filters ?? {});
+        const sorted = sortProducts(filtered, options.sort);
+        return wait(options.limit ? sorted.slice(0, options.limit) : sorted);
+      }
+    }
+  }
+
   const all = withCollections(visibleProducts());
   const filtered = applyFilters(all, options.filters ?? {});
   const sorted = sortProducts(filtered, options.sort);
@@ -162,8 +225,9 @@ export async function listCollection(
   key: keyof Product['collections'],
   limit = 6,
 ): Promise<Product[]> {
+  const all = await listProducts({ limit: 100 });
   return wait(
-    withCollections(visibleProducts())
+    all
       .filter((p) => p.collections[key])
       .sort((a, b) => b.popularity - a.popularity)
       .slice(0, limit),
@@ -171,14 +235,15 @@ export async function listCollection(
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const record = store.read().products.find((p) => (p.seo.slug || p.id) === slug);
-  if (!record || (record.status !== 'published' && record.status !== 'out_of_stock')) return wait(undefined);
-  return wait({ ...toProduct(record), collections: collectionOf(record) });
+  const all = await listProducts({ limit: 500 });
+  const found = all.find((p) => p.slug === slug || p.id === slug);
+  return wait(found);
 }
 
 export async function listRelated(product: Product, limit = 6): Promise<Product[]> {
+  const all = await listProducts({ limit: 500 });
   return wait(
-    withCollections(visibleProducts())
+    all
       .filter((p) => p.id !== product.id && p.categoryId === product.categoryId)
       .slice(0, limit),
   );
@@ -196,8 +261,9 @@ export function priceBounds() {
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return wait([]);
+  const all = await listProducts({ limit: 500 });
   const terms = q.split(/\s+/);
-  const scored = withCollections(visibleProducts())
+  const scored = all
     .map((product) => {
       const name = product.name.toLowerCase();
       const brand = product.brand.toLowerCase();
@@ -212,23 +278,21 @@ export async function searchProducts(query: string): Promise<Product[]> {
       return { product, score };
     })
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || b.product.popularity - a.product.popularity)
+    .sort((a, b) => b.score - a.score || b.product.popularity - b.product.popularity)
     .map((r) => r.product);
   return wait(scored);
 }
 
 export async function searchCategories(query: string) {
+  const cats = await listCategories();
   const q = query.trim().toLowerCase();
-  if (!q) return wait(store.read().categories.filter((c) => !c.hidden).map(toCategory));
+  if (!q) return wait(cats);
   return wait(
-    store
-      .read()
-      .categories.filter(
-        (c) =>
-          !c.hidden &&
-          (c.name.toLowerCase().includes(q) || c.subcategories.some((s) => s.name.toLowerCase().includes(q))),
-      )
-      .map(toCategory),
+    cats.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.subcategories.some((s: any) => s.name.toLowerCase().includes(q)),
+    ),
   );
 }
 
@@ -241,7 +305,7 @@ export interface StorefrontHome {
   sections: HomepageSection[];
 }
 
-function bannerToSlide(b: ReturnType<typeof activeBanners>[number]) {
+function bannerToSlide(b: any) {
   return {
     id: b.id,
     eyebrow: b.eyebrow,
