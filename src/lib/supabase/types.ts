@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Convenience aliases over the generated schema types.
  * Regenerate database.types.ts with:
  *   npx supabase gen types typescript --local > src/lib/supabase/database.types.ts

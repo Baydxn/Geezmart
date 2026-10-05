@@ -8,7 +8,7 @@ import WishlistButton from './WishlistButton';
 import { useCart } from '../store/CartContext';
 import { formatPrice } from '../lib/format';
 import { resolveProductImage } from '../lib/productImage';
-import { getCategory } from '../data/categories';
+import { useCategory } from '../store/useCatalog';
 
 /**
  * ProductCard — the core merchandising unit.
@@ -17,7 +17,7 @@ import { getCategory } from '../data/categories';
 function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const { add } = useCart();
   const [justAdded, setJustAdded] = useState(false);
-  const category = getCategory(product.categoryId);
+  const category = useCategory(product.categoryId);
   const image = resolveProductImage(product);
 
   const handleAdd = (event: React.MouseEvent) => {

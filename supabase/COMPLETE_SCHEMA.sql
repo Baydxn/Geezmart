@@ -2450,8 +2450,8 @@ grant execute on function public.sweep_abandoned_carts(int) to service_role;
 
 -- =============================================================================
 -- GEEZMART — seed data (safe to re-run; all inserts are idempotent)
--- Run AFTER the migrations. Creates the settings, menus, shipping zones and
--- homepage sections the admin panel and storefront expect to exist.
+-- Run AFTER the migrations. Creates the settings, menus, shipping zones,
+-- categories, brands, products and homepage sections.
 -- =============================================================================
 
 -- Store settings -----------------------------------------------------------------
@@ -2477,12 +2477,63 @@ insert into public.store_settings (key, value, group_name, label) values
   ('admin_login_notifications','true',                                      'ops',      'Email me about new orders')
 on conflict (key) do nothing;
 
--- Secret settings are defined but NOT readable by the anon client.
-insert into public.store_settings (key, value, group_name, label, is_secret) values
-  ('payment_provider_secret_key', '""', 'payment', 'Provider secret key', true),
-  ('smtp_password',               '""', 'email',    'SMTP password',     true),
-  ('sms_api_token',               '""', 'email',    'SMS API token',     true)
-on conflict (key) do nothing;
+-- Categories ---------------------------------------------------------------------
+insert into public.categories (name, slug, icon, tagline, description, hidden, sort_order) values
+  ('Watches', 'watches', 'watch', 'Precision on your wrist', 'Luxury and casual timepieces', false, 1),
+  ('Gadgets', 'gadgets', 'headphones', 'Sound, light and smart tech', 'Audio and mobile tech', false, 2),
+  ('Grooming', 'grooming', 'grooming', 'Everyday care, elevated', 'Skin care and beard care', false, 3),
+  ('Phones', 'phones', 'phone', 'Flagships and essentials', 'Smartphones and accessories', false, 4),
+  ('Fashion', 'fashion', 'shirt', 'Modern menswear staples', 'Sneakers and apparel', false, 5),
+  ('Furniture', 'furniture', 'sofa', 'Living, refined', 'Sofas and tables', false, 6),
+  ('Accessories', 'accessories', 'sunglasses', 'Finishing touches', 'Sunglasses and wallets', false, 7),
+  ('Home & Lifestyle', 'home-lifestyle', 'lamp', 'Quiet luxury at home', 'Lighting and decor', false, 8)
+on conflict (slug) do update set name = excluded.name, tagline = excluded.tagline;
+
+-- Brands -------------------------------------------------------------------------
+insert into public.brands (name, slug) values
+  ('Quarte', 'quarte'),
+  ('Geezmart Labs', 'geezmart-labs'),
+  ('Northline', 'northline'),
+  ('Aura Audio', 'aura-audio'),
+  ('Zenith', 'zenith')
+on conflict (name) do nothing;
+
+-- Sample Products ----------------------------------------------------------------
+insert into public.products (
+  name, slug, sku, brand_id, category_id, short_description, description,
+  price, compare_at_price, status, featured, trending, is_new_drop, rating_avg, rating_count
+)
+select
+  'Quarte Men''s Watch', 'quarte-mens-watch', 'Q-WATCH-001', b.id, c.id,
+  'Luxury | Waterproof', 'A statement timepiece built for the modern man. Solid brushed steel case and 100m water resistance.',
+  89999, 129999, 'published', true, true, false, 4.9, 412
+from public.brands b, public.categories c
+where b.slug = 'quarte' and c.slug = 'watches'
+on conflict (slug) do nothing;
+
+insert into public.products (
+  name, slug, sku, brand_id, category_id, short_description, description,
+  price, compare_at_price, status, featured, trending, is_new_drop, rating_avg, rating_count
+)
+select
+  'Smartwatch Series X', 'smartwatch-series-x', 'GZ-SMART-002', b.id, c.id,
+  'AMOLED | 14-Day Battery', 'Always-on AMOLED display, heart-rate and SpO2 tracking in a 42mm titanium-look case.',
+  74500, 92000, 'published', true, true, true, 4.7, 631
+from public.brands b, public.categories c
+where b.slug = 'geezmart-labs' and c.slug = 'watches'
+on conflict (slug) do nothing;
+
+insert into public.products (
+  name, slug, sku, brand_id, category_id, short_description, description,
+  price, compare_at_price, status, featured, trending, is_new_drop, rating_avg, rating_count
+)
+select
+  'Wireless Earbuds Pro', 'wireless-earbuds-pro', 'AURA-EAR-003', b.id, c.id,
+  'Active Noise Cancelling | Hi-Res Sound', 'Studio-grade audio with hybrid active noise cancellation and 30-hour battery life.',
+  45000, 59999, 'published', true, true, true, 4.8, 518
+from public.brands b, public.categories c
+where b.slug = 'aura-audio' and c.slug = 'gadgets'
+on conflict (slug) do nothing;
 
 -- Payment methods ----------------------------------------------------------------
 insert into public.payment_methods (kind, label, description, icon, sort_order) values
@@ -2499,7 +2550,7 @@ insert into public.shipping_zones (name, kind, states, fee, free_over, eta_min_d
   ('Pickup',       'pickup',        '{Lagos}',                                         0, null, 0, 1, 3)
 on conflict (name) do update set fee = excluded.fee, eta_min_days = excluded.eta_min_days;
 
--- Homepage sections (order drives the storefront) ---------------------------------
+-- Homepage sections --------------------------------------------------------------
 insert into public.homepage_sections (key, label, title, subtitle, cta_text, cta_href, sort_order) values
   ('hero',        'Hero Banner',      'Premium Men''s Lifestyle & Gadgets', 'Quality products. Modern living.',            'Shop Now',   '/shop',     1),
   ('categories',  'Category Shortcuts','Shop by category',                     'Everything curated for the modern man.',       'Explore',    '/categories', 2),
@@ -2510,7 +2561,7 @@ insert into public.homepage_sections (key, label, title, subtitle, cta_text, cta
   ('promotion',   'Promotions',        'MEMBERS ONLY',                         'Early access to every drop.',                 'Join Now',   '/account',  7)
 on conflict (key) do update set label = excluded.label, title = excluded.title, sort_order = excluded.sort_order;
 
--- Navigation (system_route items are protected by a DB trigger) -------------------
+-- Navigation ---------------------------------------------------------------------
 insert into public.navigation_items (location, label, href, icon, sort_order, system_route) values
   ('bottom', 'Home',       '/',          'home',  1, true),
   ('bottom', 'Shop',       '/shop',      'shop',  2, true),

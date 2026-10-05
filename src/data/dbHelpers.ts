@@ -1,4 +1,4 @@
-﻿/** Tiny primitives shared by the data layer and the seed (kept separate to avoid a cycle). */
+/** Tiny primitives shared by the data layer and the seed (kept separate to avoid a cycle). */
 
 export function uid(prefix = 'id'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`;

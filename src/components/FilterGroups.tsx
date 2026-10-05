@@ -1,11 +1,9 @@
-import { categories } from '../data/categories';
 import Icon from './Icon';
+import { useCategories } from '../store/useCatalog';
 import type { CategoryId, Filters } from '../types';
-import { listBrands, priceBounds, emptyFilters } from '../lib/api';
+import { emptyFilters } from '../lib/api';
 
 export const RATINGS = [4.5, 4, 3.5];
-const { min: PRICE_MIN, max: PRICE_MAX } = priceBounds();
-const BRANDS = listBrands();
 
 export function toggleIn<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -15,10 +13,18 @@ export function toggleIn<T>(list: T[], value: T): T[] {
 export default function FilterGroups({
   filters,
   patch,
+  brands,
+  priceMin,
+  priceMax,
 }: {
   filters: Filters;
   patch: (next: Partial<Filters>) => void;
+  /** Supplied by the caller so the bounds come from the hydrated catalogue. */
+  brands: string[];
+  priceMin: number;
+  priceMax: number;
 }) {
+  const categories = useCategories();
   return (
     <>
       <div className="filter-group">
@@ -66,7 +72,7 @@ export default function FilterGroups({
 
       <div className="filter-group">
         <p className="cat-group-title">
-          Price ({PRICE_MIN.toLocaleString()} — {PRICE_MAX.toLocaleString()})
+          Price ({priceMin.toLocaleString()} — {priceMax.toLocaleString()})
         </p>
         <div className="row" style={{ gap: 10 }}>
           <input
@@ -92,7 +98,7 @@ export default function FilterGroups({
 
       <div className="filter-group">
         <p className="cat-group-title">Brand</p>
-        {BRANDS.map((brand) => {
+        {brands.map((brand) => {
           const active = filters.brands.includes(brand);
           return (
             <button

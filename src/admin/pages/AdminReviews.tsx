@@ -52,20 +52,6 @@ export default function AdminReviews() {
           <option value="hidden">Hidden</option>
         </select>
         <span className="spacer" />
-        <button
-          type="button"
-          className="tool-btn"
-          onClick={() =>
-            setReviewStatus(
-              { id: 'new', productId: '', productName: 'Demo product', customerName: 'Test Customer', rating: 5, body: 'Sample review for moderation testing.', status: 'pending', createdAt: new Date().toISOString() },
-              'pending',
-            )
-          }
-          title="Adds a sample pending review"
-        >
-          <Icon name="plus" size={14} />
-          Sample review
-        </button>
       </div>
 
       <div className="stack" style={{ gap: 10 }}>

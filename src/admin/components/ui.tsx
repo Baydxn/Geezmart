@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Reusable admin UI primitives. All share the GEEZMART dark identity.
  */
 import { useEffect, type ReactNode } from 'react';

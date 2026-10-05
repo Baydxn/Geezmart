@@ -1,45 +1,23 @@
-﻿/**
+/**
  * Admin authentication & authorisation.
  *
- * Security model (frontend half — mirror every check server-side):
- *  - Passwords are stored ONLY as PBKDF2-SHA256(120k, per-user salt).
- *  - Login is rate limited with exponential lockout.
- *  - Session is a short-lived token in sessionStorage (or localStorage
- *    when "remember me" is used), never a raw password.
- *  - Route guards + per-role permissions decide what renders.
+ * Credentials are verified by Supabase Auth — the app never sees or stores a
+ * password hash. After a successful sign-in the `profiles` row supplies the
+ * role, which drives the permission checks below and the RLS policies in
+ * `supabase/migrations/0006_rls_roles.sql`.
+ *
+ * The frontend keeps a defensive rate limiter and a session envelope so a
+ * reload does not bounce the operator back to the login screen, but both are
+ * convenience only: Postgres RLS is the real security boundary.
  */
 import type { AdminRole, AdminUser } from '../types/admin';
 import { ROLE_PERMISSIONS } from '../types/admin';
 import { store } from '../lib/db';
+import { isSupabaseConfigured, requireClient } from '../lib/dbRepository';
+import { supabase } from '../lib/supabase';
 
 const SESSION_KEY = 'geezmart.admin.session.v1';
 const ATTEMPT_KEY = 'geezmart.admin.attempts.v1';
-const PBKDF2_ITERATIONS = 120_000;
-
-/* ------------------------------ hashing ------------------------------ */
-
-function toBase64(buffer: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
-}
-
-export async function hashPassword(password: string, salt: string): Promise<string> {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: enc.encode(salt), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
-    key,
-    256,
-  );
-  return toBase64(bits);
-}
-
-/** Constant-time-ish comparison to avoid leaking hash prefixes. */
-function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
 
 export interface AdminSession {
   token: string;
@@ -140,6 +118,16 @@ export type LoginResult =
   | { ok: true; session: AdminSession }
   | { ok: false; reason: 'invalid' | 'locked' | 'rate' };
 
+function isStaffRole(role: string): role is AdminRole {
+  return role !== 'customer';
+}
+
+/**
+ * Signs an admin in against Supabase Auth.
+ *
+ * A valid password is not sufficient: the account must also carry a staff role
+ * in `profiles`, otherwise an ordinary shopper could reach the control centre.
+ */
 export async function signIn(email: string, password: string, remember: boolean): Promise<LoginResult> {
   const normalised = email.trim().toLowerCase();
   const attempts = readAttempts(normalised);
@@ -151,25 +139,87 @@ export async function signIn(email: string, password: string, remember: boolean)
     return { ok: false, reason: 'rate' };
   }
 
-  const user = store.read().admins.find((a) => a.email.toLowerCase() === normalised);
-  const hash = await hashPassword(password, user?.salt ?? 'geezmart');
-
-  if (!user || !safeCompare(hash, user.passwordHash)) {
+  const recordFailure = () => {
     const count = attempts.count + 1;
     const max = store.read().settings.security.loginMaxAttempts;
     writeAttempts(normalised, {
       count,
       lockedUntil: count >= max ? Date.now() + 60_000 : 0,
     });
-    return { ok: false, reason: 'invalid' };
+    return { ok: false, reason: 'invalid' } as const;
+  };
+
+  if (!isSupabaseConfigured) return recordFailure();
+
+  const sb = supabase();
+  if (!sb) return recordFailure();
+
+  const { data, error } = await sb.auth.signInWithPassword({ email: normalised, password });
+  if (error || !data.user) return recordFailure();
+
+  // The role lives in `profiles`, which RLS restricts to the caller's own row.
+  const { data: profile } = await requireClient()
+    .from('profiles')
+    .select('id, role, name, email, status')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  const row = (profile as { id?: string; role?: string; name?: string; email?: string; status?: string } | null) ?? null;
+  if (!row || !row.id || !row.role || !isStaffRole(row.role)) {
+    // Authenticated, but not staff — sign out immediately and treat as invalid.
+    await sb.auth.signOut();
+    return recordFailure();
   }
 
+  if (row.status === 'suspended') {
+    await sb.auth.signOut();
+    return recordFailure();
+  }
+
+  const existing = store.read().admins.find((a) => a.id === row.id);
+  const user: AdminUser = {
+    ...(existing ?? {
+      createdAt: new Date().toISOString(),
+      lastLoginAt: '',
+    }),
+    id: row.id,
+    name: row.name || data.user.email || normalised,
+    email: row.email || data.user.email || normalised,
+    role: row.role as AdminRole,
+    avatarInitials: (row.name || normalised)
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? '')
+      .join(''),
+  };
+
   writeAttempts(normalised, { count: 0, lockedUntil: 0 });
-  const session = createSession(user, remember);
+
+  const ttl = (remember ? timeoutMinutes() * 24 : timeoutMinutes()) * 60_000;
+  const session: AdminSession = {
+    token: data.session?.access_token ?? crypto.randomUUID(),
+    userId: row.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    issuedAt: Date.now(),
+    expiresAt: Date.now() + ttl,
+  };
+  writeSession(session, remember);
+
   store.write('admins', (list) =>
     list.map((a) => (a.id === user.id ? { ...a, lastLoginAt: new Date().toISOString() } : a)),
   );
+
   return { ok: true, session };
+}
+
+/** Signs out of Supabase Auth and drops the local session envelope. */
+export async function signOut(): Promise<void> {
+  const sb = supabase();
+  if (sb) await sb.auth.signOut();
+  clearSession();
 }
 
 /* ---------------------------- permissions ---------------------------- */

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Supabase connection for GEEZMART.
  *
  * Used by BOTH the customer storefront and the admin control centre:

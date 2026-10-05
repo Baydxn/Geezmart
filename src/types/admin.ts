@@ -10,9 +10,6 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
-  /** SHA-256(salt + password). Never the plaintext. */
-  passwordHash: string;
-  salt: string;
   role: AdminRole;
   avatarInitials: string;
   createdAt: string;

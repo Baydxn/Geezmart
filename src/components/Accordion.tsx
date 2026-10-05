@@ -1,4 +1,4 @@
-﻿import { useId, useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Icon from './Icon';
 

@@ -1,4 +1,4 @@
-﻿/** Inventory control: per-SKU stock, reservations, bulk adjust. */
+/** Inventory control: per-SKU stock, reservations, bulk adjust. */
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';

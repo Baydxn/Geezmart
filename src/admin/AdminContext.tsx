@@ -15,7 +15,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { AdminUser, ActivityLog } from '../types/admin';
-import { store, uid } from '../lib/db';
+import { store, uid, hydrate, type DbStatus } from '../lib/db';
 import { can, clearSession, readSession, signIn, type AdminSession, type LoginResult } from './auth';
 
 interface AdminAuthValue {
@@ -78,16 +78,41 @@ export function useAdminAuth() {
 /* ------------------------------ reactivity ------------------------------ */
 
 const DbContext = createContext<number>(0);
+const DbStatusContext = createContext<DbStatus>('idle');
 
+/**
+ * Shared snapshot owner.
+ *
+ * Mounts once around the whole app (storefront + admin) and kicks off the
+ * initial `hydrate()` from Postgres. Every admin write and every store read
+ * flows through `store`, so one hydration covers both halves of the product.
+ * Subscribed components re-render whenever the snapshot changes.
+ */
 export function DbProvider({ children }: { children: ReactNode }) {
   const [version, setVersion] = useState(0);
+  const [status, setStatus] = useState<DbStatus>(() => store.status());
+
   useEffect(() => {
-    const unsubscribe = store.subscribe(() => setVersion((v) => v + 1));
+    const unsubStore = store.subscribe(() => setVersion((v) => v + 1));
+    const unsubStatus = store.subscribeStatus(() => setStatus(store.status()));
+    // Kick off the first load from Postgres. When Supabase is unconfigured this
+    // resolves immediately and the local seed keeps the UI usable.
+    void hydrate();
     return () => {
-      unsubscribe();
+      unsubStore();
+      unsubStatus();
     };
   }, []);
-  return <DbContext.Provider value={version}>{children}</DbContext.Provider>;
+  return (
+    <DbContext.Provider value={version}>
+      <DbStatusContext.Provider value={status}>{children}</DbStatusContext.Provider>
+    </DbContext.Provider>
+  );
+}
+
+/** Current connection state — surfaced by the Settings screen and footer badge. */
+export function useDbStatus(): DbStatus {
+  return useContext(DbStatusContext);
 }
 
 /** Any component calling this re-renders whenever the database changes. */

@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Icon, { type IconName } from '../components/Icon';
-import { categories } from '../data/categories';
+import { useCategories } from '../store/useCatalog';
 
 export default function Categories() {
+  const categories = useCategories();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const active = useMemo(() => categories.find((c) => c.id === activeId) ?? null, [activeId]);
+  const active = useMemo(() => categories.find((c) => c.id === activeId) ?? null, [categories, activeId]);
 
   const grouped = useMemo(() => {
     if (!active) return [];

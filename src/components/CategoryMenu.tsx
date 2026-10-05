@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Icon, { type IconName } from './Icon';
-import { categories } from '../data/categories';
+import { useCategories } from '../store/useCatalog';
 import type { Subcategory } from '../types';
 
 /**
@@ -10,12 +10,13 @@ import type { Subcategory } from '../types';
  * expansion panel. Selecting a different bubble collapses the previous panel.
  */
 export default function CategoryMenu() {
+  const categories = useCategories();
   const [activeId, setActiveId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const active = useMemo(
     () => categories.find((c) => c.id === activeId) ?? null,
-    [activeId],
+    [categories, activeId],
   );
 
   const grouped = useMemo(() => {

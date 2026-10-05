@@ -2,7 +2,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Icon from './Icon';
 import FilterGroups, { EMPTY_FILTERS } from './FilterGroups';
 import { useUI } from '../store/UIContext';
-import { SORT_OPTIONS } from '../lib/api';
+import { useDbVersion } from '../admin/AdminContext';
+import { listBrands, priceBounds, SORT_OPTIONS } from '../lib/api';
 import type { Filters, SortKey } from '../types';
 
 interface FilterSheetProps {
@@ -17,6 +18,11 @@ interface FilterSheetProps {
 export default function FilterSheet({ filters, sort, onChange, onSort, resultCount }: FilterSheetProps) {
   const { sheet, closeSheet } = useUI();
   const open = sheet !== null;
+  useDbVersion();
+  // Bounds come from the hydrated catalogue so they track admin edits.
+  const bounds = priceBounds();
+  const priceMin = Number.isFinite(bounds.min) ? bounds.min : 0;
+  const priceMax = Number.isFinite(bounds.max) ? bounds.max : 0;
 
   return (
     <AnimatePresence>
@@ -71,7 +77,13 @@ export default function FilterSheet({ filters, sort, onChange, onSort, resultCou
                   ))}
                 </div>
               ) : (
-                <FilterGroups filters={filters} patch={(next) => onChange({ ...filters, ...next })} />
+                <FilterGroups
+                  filters={filters}
+                  patch={(next) => onChange({ ...filters, ...next })}
+                  brands={listBrands()}
+                  priceMin={priceMin}
+                  priceMax={priceMax}
+                />
               )}
             </div>
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Demo data seed for the GEEZMART control plane.
  *
  * The storefront catalogue is converted into admin-managed records so the two
@@ -31,8 +31,6 @@ const ADMIN_ACCOUNTS = [
     id: 'adm_1',
     name: 'Eriqk Okoro',
     email: 'admin@geezmart.ng',
-    salt: 'ek0Gm2uR',
-    passwordHash: 'rlqeqVVujAGWZHBsWMc5AEChMbKLNp/84JSKlDxJIg0=',
     role: 'super_admin' as const,
     avatarInitials: 'EO',
   },
@@ -40,8 +38,6 @@ const ADMIN_ACCOUNTS = [
     id: 'adm_2',
     name: 'Ada Nwosu',
     email: 'manager@geezmart.ng',
-    salt: 'mn7xQ4b1',
-    passwordHash: '3BVgN1wy1Lo9uJN5VS1jXn+stmYwJeRA1/vRHjsMbiY=',
     role: 'product_manager' as const,
     avatarInitials: 'AN',
   },
@@ -49,8 +45,6 @@ const ADMIN_ACCOUNTS = [
     id: 'adm_3',
     name: 'Tomi Balogun',
     email: 'orders@geezmart.ng',
-    salt: 'or3Zw9Lt',
-    passwordHash: 'M0JiIiN7vLQqY9g5ZpntSTl05ozMXQOiJs47uiXgMzA=',
     role: 'order_manager' as const,
     avatarInitials: 'TB',
   },

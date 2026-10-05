@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import Icon, { type IconName } from './Icon';
 import Logo from './Logo';
 import SupabaseBadge from './SupabaseBadge';
-import { categories } from '../data/categories';
+import { useCategories } from '../store/useCatalog';
 
+/** Static footer columns; the Categories column is filled from live data. */
 const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
     title: 'Shop',
@@ -14,10 +15,6 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: "Men's Picks", to: '/shop?collection=menPick' },
       { label: 'Saved Items', to: '/wishlist' },
     ],
-  },
-  {
-    title: 'Categories',
-    links: categories.slice(0, 5).map((c) => ({ label: c.name, to: `/shop?category=${c.id}` })),
   },
   {
     title: 'Account',
@@ -39,6 +36,16 @@ const SOCIALS: { name: string; icon: IconName }[] = [
 ];
 
 export default function Footer() {
+  const categories = useCategories();
+  // Shop | Categories (live from the store) | Account
+  const columns = [
+    COLUMNS[0],
+    {
+      title: 'Categories',
+      links: categories.slice(0, 5).map((c) => ({ label: c.name, to: `/shop?category=${c.id}` })),
+    },
+    ...COLUMNS.slice(1),
+  ];
   return (
     <footer className="footer">
       <div className="footer-inner">
@@ -63,7 +70,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {COLUMNS.map((column) => (
+        {columns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <p className="footer-col-title">{column.title}</p>
             {column.links.map((link) => (

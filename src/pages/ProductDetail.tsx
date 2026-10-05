@@ -10,7 +10,7 @@ import ProductGrid, { ProductGridSkeleton } from '../components/ProductGrid';
 import { BackHeader } from '../components/TopNavigation';
 import { useCart } from '../store/CartContext';
 import { getProductBySlug, listRelated } from '../lib/api';
-import { getCategory } from '../data/categories';
+import { useCategory } from '../store/useCatalog';
 import { formatPrice, formatDate } from '../lib/format';
 import { productGallery, resolveProductImage } from '../lib/productImage';
 import type { Product } from '../types';
@@ -28,6 +28,8 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
+  // Hook lives above the loading early-return so the hook order stays stable.
+  const category = useCategory(product?.categoryId ?? '');
 
   useEffect(() => {
     let active = true;
@@ -69,7 +71,6 @@ export default function ProductDetail() {
     );
   }
 
-  const category = getCategory(product.categoryId);
   const variant = product.colors[variantIndex] ?? product.colors[0];
   const image = gallery[imageIndex] ?? resolveProductImage(product, variantIndex);
 
@@ -264,7 +265,7 @@ export default function ProductDetail() {
 
 /** Expandable information blocks on the product detail page. */
 function ProductAccordion({ product }: { product: Product }) {
-  const category = getCategory(product.categoryId);
+  const category = useCategory(product.categoryId);
   return (
     <Accordion
       defaultOpen="details"

@@ -93,7 +93,7 @@ export default function Account() {
         <button
           type="button"
           className="menu-card"
-          onClick={() => notify('You have been signed out (demo)')}
+          onClick={() => notify('You have been signed out')}
         >
           <span className="menu-icon">
             <Icon name="logout" size={18} />

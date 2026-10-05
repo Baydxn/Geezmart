@@ -1,4 +1,4 @@
-﻿/** Orders list + detail with status control that drives customer tracking. */
+/** Orders list + detail with status control that drives customer tracking. */
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';

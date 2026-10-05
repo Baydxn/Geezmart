@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from 'react';
 import type { CartLine, CartTotals, Product } from '../types';
-import { products } from '../data/products';
+import { toProduct } from '../lib/api';
+import { store, visibleProducts } from '../lib/db';
+import { useDbVersion } from '../admin/AdminContext';
 import { useToast } from './ToastContext';
 
 /* ============================================================
@@ -19,8 +21,24 @@ import { useToast } from './ToastContext';
 const STORAGE_KEY = 'geezmart.cart.v1';
 export const DELIVERY_FEE = 3500;
 export const PICKUP_FEE = 0;
-/** Demo discount: free delivery is waived above this threshold. */
-export const FREE_DELIVERY_THRESHOLD = 250000;
+/** Fallback waiver threshold when the admin has not configured shipping zones. */
+const FREE_DELIVERY_THRESHOLD = 250000;
+
+/** Reads the live delivery fee for a method from the admin-managed zones. */
+function feeFor(method: 'home' | 'pickup'): number {
+  const zones = store.read().settings.shippingZones.filter((z) => z.enabled);
+  const match = zones.find((z) =>
+    method === 'pickup' ? /pickup/i.test(z.name) : !/pickup/i.test(z.name),
+  );
+  return match ? match.fee : method === 'pickup' ? PICKUP_FEE : DELIVERY_FEE;
+}
+
+/** Free-delivery waiver, derived from the enabled home-delivery zones. */
+function freeOver(): number {
+  const zones = store.read().settings.shippingZones.filter((z) => z.enabled && !/pickup/i.test(z.name));
+  const thresholds = zones.map((z) => z.fee > 0 ? FREE_DELIVERY_THRESHOLD : 0).filter((n) => n > 0);
+  return thresholds.length ? Math.min(...thresholds) : FREE_DELIVERY_THRESHOLD;
+}
 
 type Action =
   | { type: 'add'; productId: string; variantId: string; quantity: number }
@@ -58,12 +76,20 @@ function reducer(state: CartLine[], action: Action): CartLine[] {
   }
 }
 
+/**
+ * Reads the published catalogue out of the hydrated database snapshot.
+ * Derived on every render so a price or stock edit in the admin panel is
+ * reflected in an open cart immediately.
+ */
 function load(): CartLine[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as CartLine[];
-    return Array.isArray(parsed) ? parsed.filter((l) => products.some((p) => p.id === l.productId)) : [];
+    if (!Array.isArray(parsed)) return [];
+    // Drop lines whose product no longer exists or is no longer purchasable.
+    const catalog = new Set(visibleProducts().map((p) => p.id));
+    return parsed.filter((l) => catalog.has(l.productId));
   } catch {
     return [];
   }
@@ -91,6 +117,8 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  // Re-render whenever the database snapshot changes (admin edits, realtime).
+  useDbVersion();
   const [state, dispatch] = useReducer(reducer, [] as CartLine[]);
   const [deliveryMethod, setDeliveryMethodRaw] = useState<'home' | 'pickup'>('home');
   const { notify } = useToast();
@@ -109,27 +137,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const setDeliveryMethod = useCallback((m: 'home' | 'pickup') => setDeliveryMethodRaw(m), []);
 
-  const lines = useMemo<DetailedCartLine[]>(
-    () =>
-      state.flatMap((line) => {
-        const product = products.find((p) => p.id === line.productId);
-        if (!product) return [];
-        return [
-          {
-            ...line,
-            product,
-            variantLabel: product.colors.find((c) => c.id === line.variantId)?.label ?? 'Standard',
-            lineTotal: product.price * line.quantity,
-          },
-        ];
-      }),
-    [state],
-  );
+  const lines = useMemo<DetailedCartLine[]>(() => {
+    // Derive the catalogue fresh so prices/variants reflect the latest snapshot.
+    const catalog = new Map(visibleProducts().map((p) => [p.id, toProduct(p)]));
+    return state.flatMap((line) => {
+      const product = catalog.get(line.productId);
+      if (!product) return [];
+      return [
+        {
+          ...line,
+          product,
+          variantLabel: product.colors.find((c) => c.id === line.variantId)?.label ?? 'Standard',
+          lineTotal: product.price * line.quantity,
+        },
+      ];
+    });
+  }, [state]);
 
   const totals = useMemo<CartTotals>(() => {
     const subtotal = lines.reduce((sum, l) => sum + l.lineTotal, 0);
-    const delivery = lines.length === 0 ? 0 : deliveryMethod === 'pickup' ? PICKUP_FEE : DELIVERY_FEE;
-    const discount = subtotal >= FREE_DELIVERY_THRESHOLD ? delivery : 0;
+    const delivery = lines.length === 0 ? 0 : feeFor(deliveryMethod);
+    const threshold = freeOver();
+    const discount = delivery > 0 && subtotal >= threshold ? delivery : 0;
     return {
       subtotal,
       delivery,
@@ -154,12 +183,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const remove = useCallback(
     (lineId: string) => {
-      const line = state.find((l) => l.lineId === lineId);
+      const name = lines.find((l) => l.lineId === lineId)?.product.name;
       dispatch({ type: 'remove', lineId });
-      const name = line ? products.find((p) => p.id === line.productId)?.name : null;
       notify(`Removed from cart${name ? ` — ${name}` : ''}`);
     },
-    [state, notify],
+    [lines, notify],
   );
 
   const clear = useCallback(() => dispatch({ type: 'clear' }), []);

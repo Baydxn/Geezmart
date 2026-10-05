@@ -1,4 +1,4 @@
-﻿export default function CartDrawer() {
+export default function CartDrawer() {
   const { cartOpen, closeCart } = useUI();
   const { lines, totals, isEmpty } = useCart();
   const navigate = useNavigate();

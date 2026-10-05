@@ -1,8 +1,10 @@
 /**
  * Storefront query layer.
  *
- * Fetches products and categories directly from Supabase when configured,
- * falling back to local seed store.
+ * Every read is served from the hydrated snapshot in `src/lib/db.ts`, which is
+ * itself loaded from Postgres. Routing storefront reads through that one
+ * snapshot (instead of issuing a second parallel query) is what guarantees an
+ * edit made in the admin panel is the edit shoppers see.
  */
 import type {
   CategoryId,
@@ -13,13 +15,19 @@ import type {
 } from '../types';
 import type { AdminCategory, AdminProduct, HomepageSection } from '../types/admin';
 import { store, visibleProducts, activePrice, availableStock, activeBanners, homepageSections } from './db';
-import { supabase, isSupabaseConfigured } from './supabase/client';
-
-const LATENCY = 140;
-const wait = <T,>(value: T, ms = LATENCY): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), ms));
 
 /* ------------------------------ mapping ------------------------------ */
+
+/**
+ * Returns `value` on the microtask queue.
+ *
+ * These reads are served from the hydrated snapshot rather than the network, so
+ * there is nothing to wait for — this only keeps a consistent async boundary so
+ * callers can rely on every query returning a promise.
+ */
+function wait<T>(value: T): Promise<T> {
+  return Promise.resolve(value);
+}
 
 export function toProduct(record: AdminProduct): Product {
   const price = activePrice(record);
@@ -140,85 +148,24 @@ function withCollections(records: AdminProduct[]): Product[] {
 }
 
 export async function listCategories() {
-  if (isSupabaseConfigured) {
-    const sb = supabase();
-    if (sb) {
-      const { data, error } = await sb.from('categories').select('*').eq('hidden', false).order('sort_order');
-      if (!error && data && data.length > 0) {
-        return data.map((c: any) => ({
-          id: c.slug as CategoryId,
-          name: c.name,
-          slug: c.slug,
-          icon: c.icon || 'shop',
-          tagline: c.tagline || '',
-          subcategories: Array.isArray(c.subcategories) ? c.subcategories : [],
-        }));
-      }
-    }
-  }
-  return wait(store.read().categories.filter((c) => !c.hidden).sort((a, b) => a.order - b.order).map(toCategory));
+  const cats = store
+    .read()
+    .categories.filter((c) => !c.hidden)
+    .sort((a, b) => a.order - b.order)
+    .map(toCategory);
+  return cats;
 }
 
 export async function getCategory(id: string) {
   const cats = await listCategories();
-  return wait(cats.find((c) => c.id === id || c.slug === id));
+  return cats.find((c) => c.id === id || c.slug === id);
 }
 
 export async function listProducts(options: { filters?: Partial<Filters>; sort?: SortKey; limit?: number } = {}) {
-  if (isSupabaseConfigured) {
-    const sb = supabase();
-    if (sb) {
-      const { data, error } = await sb.from('storefront_catalog').select('*');
-      if (!error && data && data.length > 0) {
-        const mapped: Product[] = data.map((row: any) => {
-          const price = Number(row.price || 0);
-          const compareAt = row.compare_at_price ? Number(row.compare_at_price) : undefined;
-          const stock = Number(row.stock || 0);
-          const createdAt = row.created_at || new Date().toISOString();
-          const categoryId = (row.category_slug || 'all') as CategoryId;
-          const prod: Product = {
-            id: row.id,
-            slug: row.slug || row.id,
-            name: row.name,
-            brand: row.brand || 'Geezmart',
-            categoryId,
-            subcategoryId: row.subcategory || '',
-            blurb: row.short_description || '',
-            description: row.description || '',
-            price,
-            compareAtPrice: compareAt,
-            currency: '₦',
-            rating: Number(row.rating_avg || 0),
-            reviewCount: Number(row.rating_count || 0),
-            stock,
-            visual: 'watch',
-            image: row.images?.[0]?.url || '',
-            gallery: (row.images || []).map((i: any) => i.url),
-            colors: [{ id: `${row.id}-0`, label: 'Standard', hex: '#c7ccd3' }],
-            tags: [row.brand || '', row.category || '', ...row.name.toLowerCase().split(/\s+/)],
-            badges: row.is_new_drop ? ['New Drop'] : [],
-            collections: {
-              featured: Boolean(row.featured),
-              newDrop: Boolean(row.is_new_drop),
-              trending: Boolean(row.trending),
-              menPick: Boolean(row.mens_pick),
-            },
-            createdAt,
-            popularity: Number(row.rating_count || 0) * 10 + (row.featured ? 50 : 0),
-          };
-          return prod;
-        });
-        const filtered = applyFilters(mapped, options.filters ?? {});
-        const sorted = sortProducts(filtered, options.sort);
-        return wait(options.limit ? sorted.slice(0, options.limit) : sorted);
-      }
-    }
-  }
-
   const all = withCollections(visibleProducts());
   const filtered = applyFilters(all, options.filters ?? {});
   const sorted = sortProducts(filtered, options.sort);
-  return wait(options.limit ? sorted.slice(0, options.limit) : sorted);
+  return options.limit ? sorted.slice(0, options.limit) : sorted;
 }
 
 export async function listCollection(
@@ -226,27 +173,22 @@ export async function listCollection(
   limit = 6,
 ): Promise<Product[]> {
   const all = await listProducts({ limit: 100 });
-  return wait(
-    all
-      .filter((p) => p.collections[key])
-      .sort((a, b) => b.popularity - a.popularity)
-      .slice(0, limit),
-  );
+  return all
+    .filter((p) => p.collections[key])
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(0, limit);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const all = await listProducts({ limit: 500 });
-  const found = all.find((p) => p.slug === slug || p.id === slug);
-  return wait(found);
+  const all = await listProducts();
+  return all.find((p) => p.slug === slug || p.id === slug);
 }
 
 export async function listRelated(product: Product, limit = 6): Promise<Product[]> {
-  const all = await listProducts({ limit: 500 });
-  return wait(
-    all
-      .filter((p) => p.id !== product.id && p.categoryId === product.categoryId)
-      .slice(0, limit),
-  );
+  const all = await listProducts();
+  return all
+    .filter((p) => p.id !== product.id && p.categoryId === product.categoryId)
+    .slice(0, limit);
 }
 
 export function listBrands(): string[] {

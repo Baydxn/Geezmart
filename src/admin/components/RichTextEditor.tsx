@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Lightweight rich-text editor for product descriptions and content pages.
  * Stores semantic HTML; renders a sanitised preview. No third-party editor.
  */

@@ -1,10 +1,10 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Icon, { type IconName } from '../components/Icon';
 import ProductGrid, { ProductGridSkeleton } from '../components/ProductGrid';
 import FilterSheet from '../components/FilterSheet';
 import { EMPTY_FILTERS } from '../components/FilterGroups';
-import { categories } from '../data/categories';
+import { useCategories } from '../store/useCatalog';
 import {
   activeFilterCount,
   applyFilters,
@@ -19,6 +19,7 @@ import { useUI } from '../store/UIContext';
 export default function Shop() {
   const [params, setParams] = useSearchParams();
   const { openSearch, openSheet } = useUI();
+  const categories = useCategories();
 
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS });
   const [sort, setSort] = useState<SortKey>('recommended');

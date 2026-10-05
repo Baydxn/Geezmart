@@ -91,7 +91,7 @@ export default function Checkout() {
     setStep((s) => Math.min(STEPS.length - 1, s + 1));
   };
 
-  const place = () => {
+  const place = async () => {
     setPlacing(true);
     const orderLines: OrderLine[] = lines.map((line) => ({
       productId: line.product.id,
@@ -104,9 +104,8 @@ export default function Checkout() {
       image: line.product.image,
     }));
 
-    // Simulated request — a real backend would POST the same payload here.
-    window.setTimeout(() => {
-      const order = placeOrder({
+    try {
+      const order = await placeOrder({
         lines: orderLines,
         subtotal: totals.subtotal,
         delivery: totals.delivery,
@@ -126,7 +125,9 @@ export default function Checkout() {
       clear();
       notify('Order confirmed', 'success');
       navigate(`/order-confirmed/${order.id}`, { replace: true });
-    }, 900);
+    } finally {
+      setPlacing(false);
+    }
   };
 
   const panels = [

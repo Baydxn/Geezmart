@@ -72,7 +72,7 @@ export default function Tracking() {
           </div>
           <h3>{query ? 'No order found' : 'Enter your reference'}</h3>
           <p className="text-3 t-sm">
-            {query ? 'Check the reference in your confirmation message.' : 'Try GZ-000001 to see the demo order.'}
+            {query ? 'Check the reference in your confirmation message.' : 'Enter the order reference from your confirmation email, e.g. GZ-000001.'}
           </p>
         </div>
       ) : (

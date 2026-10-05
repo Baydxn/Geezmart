@@ -1,4 +1,4 @@
-﻿/** SEO / meta editor with a live Google + social preview. */
+/** SEO / meta editor with a live Google + social preview. */
 import Icon from '../../components/Icon';
 import type { SeoMeta } from '../../types/admin';
 

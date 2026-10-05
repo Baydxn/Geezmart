@@ -1,4 +1,4 @@
-﻿/** Category + subcategory management with ordering and visibility. */
+/** Category + subcategory management with ordering and visibility. */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Icon from '../../components/Icon';

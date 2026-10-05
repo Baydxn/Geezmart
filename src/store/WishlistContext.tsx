@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Product } from '../types';
-import { products } from '../data/products';
+import { listProducts } from '../lib/api';
 import { useToast } from './ToastContext';
 
 /* ============================================================
@@ -29,6 +29,7 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<string[]>([]);
+  const [catalog, setCatalog] = useState<Product[]>([]);
   const { notify } = useToast();
 
   useEffect(() => {
@@ -46,6 +47,24 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+  }, [ids]);
+
+  // Resolve saved ids against the live catalog so renamed or removed products
+  // drop out naturally instead of rendering a stale local copy.
+  useEffect(() => {
+    if (!ids.length) {
+      setCatalog([]);
+      return;
+    }
+    let active = true;
+    void listProducts().then((all) => {
+      if (!active) return;
+      const wanted = new Set(ids);
+      setCatalog(all.filter((p) => wanted.has(p.id)));
+    });
+    return () => {
+      active = false;
+    };
   }, [ids]);
 
   const has = useCallback((productId: string) => ids.includes(productId), [ids]);
@@ -67,8 +86,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, [notify]);
 
   const items = useMemo(
-    () => ids.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => Boolean(p)),
-    [ids],
+    () => ids.map((id) => catalog.find((p) => p.id === id)).filter((p): p is Product => Boolean(p)),
+    [ids, catalog],
   );
 
   const value = useMemo(() => ({ ids, items, has, toggle, remove }), [ids, items, has, toggle, remove]);

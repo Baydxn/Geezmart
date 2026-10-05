@@ -1,4 +1,4 @@
-﻿/** Hero banner management. The storefront carousel reads these records. */
+/** Hero banner management. The storefront carousel reads these records. */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Icon from '../../components/Icon';

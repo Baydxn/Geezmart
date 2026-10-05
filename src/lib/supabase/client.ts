@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Typed Supabase client factory.
  *
  * Single place where the publishable key is read. Never import a service-role

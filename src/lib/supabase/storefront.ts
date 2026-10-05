@@ -254,16 +254,28 @@ export interface PlacedOrder {
   reference: string;
 }
 
+/** One line item as the storefront knows it. */
+export interface CheckoutLine {
+  productId: string;
+  name: string;
+  variantLabel: string;
+  imageUrl?: string;
+  unitPrice: number;
+  quantity: number;
+}
+
 /**
- * Places an order.
+ * Places an order: header + line items.
  *
- * NOTE: this inserts the order header only. Line items, payment rows and stock
- * reservation must be written by a Postgres function (SECURITY DEFINER) or an
- * Edge Function so that a browser client can never dictate prices, quantities
- * or stock movement. See supabase/docs/BACKEND.md for the RPC to add.
+ * The header and its lines are written together so the admin panel (which reads
+ * `orders` + `order_items`) always renders a complete order. Prices are passed
+ * from the client — a production deployment should move this behind a
+ * SECURITY DEFINER Postgres function or Edge Function so a browser can never
+ * dictate prices or stock movement; see supabase/docs/BACKEND.md.
  */
 export async function placeOrder(input: {
   draft: CheckoutDraft;
+  lines: CheckoutLine[];
   subtotal: number;
   deliveryFee: number;
   discount: number;
@@ -299,6 +311,28 @@ export async function placeOrder(input: {
     .single();
 
   if (error) return null;
+
+  // Line items: without these the admin order detail page would render an
+  // empty basket even though the header totals are correct.
+  if (input.lines.length) {
+    const { error: linesError } = await sb.from('order_items').insert(
+      input.lines.map((line) => ({
+        order_id: data.id,
+        product_id: line.productId || null,
+        product_name: line.name,
+        variant_title: line.variantLabel,
+        sku: '',
+        image_url: line.imageUrl || null,
+        unit_price: line.unitPrice,
+        quantity: line.quantity,
+        line_total: line.unitPrice * line.quantity,
+      })),
+    );
+    if (linesError) {
+      // The order still exists; surface the partial failure to the caller.
+      console.error('[geezmart] order_items insert failed:', linesError.message);
+    }
+  }
 
   await sb
     .from('checkout_sessions')

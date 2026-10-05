@@ -4,7 +4,7 @@
  */
 import { Suspense, lazy, type ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useAdminAuth } from './AdminContext';
+import { useAdminAuth, AdminAuthProvider } from './AdminContext';
 import AdminShell from './components/AdminShell';
 import { AdminEmpty } from './components/ui';
 
@@ -66,9 +66,10 @@ function Section({
 
 export default function AdminRoutes() {
   return (
-    <Suspense fallback={<div className="admin-empty"><p className="admin-hint">Loading…</p></div>}>
-      <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
+    <AdminAuthProvider>
+      <Suspense fallback={<div className="admin-empty"><p className="admin-hint">Loading…</p></div>}>
+        <Routes>
+          <Route path="/admin/login" element={<AdminLogin />} />
 
         <Route
           path="/admin"
@@ -101,7 +102,8 @@ export default function AdminRoutes() {
         </Route>
 
         <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </AdminAuthProvider>
   );
 }

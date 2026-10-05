@@ -421,8 +421,8 @@ export default function AdminSettings() {
             <p className="form-section-title">Danger zone</p>
             <div className="row" style={{ justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <p className="t-sm semi">Reset demo data</p>
-                <p className="admin-hint">Restores products, orders, banners and settings to the seeded state.</p>
+                <p className="t-sm semi">Reset store data</p>
+                <p className="admin-hint">Re-reads products, orders, banners and settings from the connected database.</p>
               </div>
               <button
                 type="button"

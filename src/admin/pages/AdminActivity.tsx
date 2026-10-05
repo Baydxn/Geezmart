@@ -1,4 +1,4 @@
-﻿/** Admin activity log: who changed what, with before/after values. */
+/** Admin activity log: who changed what, with before/after values. */
 import { useMemo, useState } from 'react';
 import Icon from '../../components/Icon';
 import { store } from '../../lib/db';

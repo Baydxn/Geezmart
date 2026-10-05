@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Sales chart — dependency-free SVG line/area chart with hover tooltip.
  * Range selector drives the underlying data from the orders collection.
  */

@@ -140,33 +140,15 @@ export default function AdminLogin() {
           style={{ marginTop: 18, padding: 12, background: 'rgba(255,255,255,0.03)' }}
         >
           <p className="admin-kicker" style={{ marginBottom: 8 }}>
-            Demo accounts
+            Staff accounts
           </p>
-          <div className="stack" style={{ gap: 6 }}>
-            {[
-              ['admin@geezmart.ng', 'Super Admin'],
-              ['manager@geezmart.ng', 'Product Manager'],
-              ['orders@geezmart.ng', 'Order Manager'],
-            ].map(([mail, role]) => (
-              <button
-                key={mail}
-                type="button"
-                className="list-row"
-                style={{ padding: '8px 10px' }}
-                onClick={() => {
-                  setEmail(mail);
-                  setPassword('GEEZMART2024!');
-                  setError(null);
-                }}
-              >
-                <span className="t-xs semi">{mail}</span>
-                <span className="spacer" />
-                <span className="admin-hint">{role}</span>
-              </button>
-            ))}
-          </div>
+          <p className="admin-hint">
+            Sign in with a Supabase Auth account that also has a staff row in <code>profiles</code>{' '}
+            (role must not be <code>customer</code>). Non-staff accounts are rejected even when the
+            password is correct.
+          </p>
           <p className="admin-hint" style={{ marginTop: 8 }}>
-            Shared demo password: <strong>GEEZMART2024!</strong>
+            Roles and access rights are enforced by Postgres RLS, not by the UI.
           </p>
         </div>
 

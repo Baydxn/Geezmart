@@ -1,4 +1,4 @@
-﻿/** Product management: filters, bulk-aware table, row actions. */
+/** Product management: filters, bulk-aware table, row actions. */
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../../components/Icon';
