@@ -11,10 +11,11 @@ import {
   type ConnectionReport,
 } from '../../lib/supabase';
 
-type Tab = 'store' | 'shipping' | 'payments' | 'notifications' | 'navigation' | 'security' | 'backend';
+type Tab = 'store' | 'announcements' | 'shipping' | 'payments' | 'notifications' | 'navigation' | 'security' | 'backend';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'store', label: 'Store' },
+  { key: 'announcements', label: 'Announcements' },
   { key: 'shipping', label: 'Shipping' },
   { key: 'payments', label: 'Payments' },
   { key: 'notifications', label: 'Notifications' },
@@ -152,6 +153,84 @@ export default function AdminSettings() {
                 Add platform
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {tab === 'announcements' ? (
+        <div className="form-section">
+          <p className="form-section-title">Announcement ticker</p>
+          <p className="admin-hint">
+            The animated marquee pinned to the very top of the storefront. Shoppers only see enabled rows;
+            links use storefront paths (e.g. /shop).
+          </p>
+          <div className="stack" style={{ gap: 8 }}>
+            {(settings.announcements ?? []).map((item) => (
+              <div className="list-row" key={item.id} style={{ flexWrap: 'wrap' }}>
+                <select
+                  className="input-dark"
+                  style={{ width: 140 }}
+                  value={item.icon}
+                  aria-label="Announcement icon"
+                  onChange={(e) => patch({ announcements: (settings.announcements ?? []).map((a) => (a.id === item.id ? { ...a, icon: e.target.value } : a)) }, 'Announcement icon updated')}
+                >
+                  <option value="truck">truck</option>
+                  <option value="refresh">refresh</option>
+                  <option value="shield">shield</option>
+                  <option value="gift">gift</option>
+                  <option value="wallet">wallet</option>
+                  <option value="sparkle">sparkle</option>
+                  <option value="bell">bell</option>
+                  <option value="star">star</option>
+                </select>
+                <input
+                  className="input-dark"
+                  style={{ flex: '1 1 220px', minWidth: 180 }}
+                  value={item.label}
+                  aria-label="Announcement text"
+                  onChange={(e) => patch({ announcements: (settings.announcements ?? []).map((a) => (a.id === item.id ? { ...a, label: e.target.value } : a)) }, 'Announcement text updated')}
+                />
+                <input
+                  className="input-dark"
+                  style={{ width: 170 }}
+                  value={item.href}
+                  aria-label="Announcement link"
+                  onChange={(e) => patch({ announcements: (settings.announcements ?? []).map((a) => (a.id === item.id ? { ...a, href: e.target.value } : a)) }, 'Announcement link updated')}
+                />
+                <span className="spacer" />
+                <Switch
+                  checked={item.enabled}
+                  label={`Show "${item.label}"`}
+                  onChange={(next) => patch({ announcements: (settings.announcements ?? []).map((a) => (a.id === item.id ? { ...a, enabled: next } : a)) }, 'Announcement toggled')}
+                />
+                <button
+                  type="button"
+                  className="icon-btn icon-btn-sm"
+                  aria-label={`Remove ${item.label}`}
+                  onClick={() => patch({ announcements: (settings.announcements ?? []).filter((a) => a.id !== item.id) }, 'Announcement removed')}
+                >
+                  <Icon name="trash" size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() =>
+                patch(
+                  {
+                    announcements: [
+                      ...(settings.announcements ?? []),
+                      { id: `ann_${Date.now()}`, label: 'New announcement', href: '/shop', icon: 'sparkle', enabled: true },
+                    ],
+                  },
+                  'Announcement added',
+                )
+              }
+            >
+              <Icon name="plus" size={14} />
+              Add announcement
+            </button>
           </div>
         </div>
       ) : null}

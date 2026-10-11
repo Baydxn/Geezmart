@@ -1,5 +1,6 @@
 /* ============================================================
-   GEEZMART â€” Promo, trust strip, footer
+   GEEZMART — Promo, trust strip, footer
+   Light theme: black + white
    ============================================================ */
 
 .promo {
@@ -60,18 +61,18 @@
   padding: 14px;
   border-radius: var(--r-md);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   font-size: 12.5px;
   font-weight: 600;
 }
 .trust-item svg {
   flex: 0 0 auto;
-  color: #fff;
+  color: #000;
 }
 
 .footer {
-  margin-top: 48px;
-  border-top: 1px solid var(--line);
+  margin-top: 56px;
+  border-top: 1px solid var(--line-strong);
   background: #0a0b0e;
   padding: 40px var(--gutter) calc(var(--bottomnav-h) + 30px + env(safe-area-inset-bottom, 0px));
 }
@@ -117,7 +118,7 @@
   max-width: var(--page-max);
   margin: 26px auto 0;
   padding-top: 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-strong);
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -135,7 +136,7 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   color: var(--text-2);
   transition: all var(--dur-fast) var(--ease);
 }
@@ -144,8 +145,9 @@
   color: #000;
   border-color: #fff;
 }
+
 /* ============================================================
-   GEEZMART â€” Product card & grid
+   GEEZMART — Product card & grid
    ============================================================ */
 
 .product-grid {
@@ -171,7 +173,7 @@
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--r-lg);
   overflow: hidden;
   transition:
@@ -220,15 +222,14 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgba(10, 11, 14, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.85);
+  color: #000;
+  border: 1px solid rgba(10, 11, 14, 0.12);
 }
 .p-badge[data-tone='invert'] {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
+  background: #000;
+  color: #fff;
+  border-color: #000;
 }
 
 .p-card-fav {
@@ -318,9 +319,9 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.06);
   border: 1px solid var(--line-strong);
-  color: #fff;
+  color: #000;
   transition:
     background var(--dur-fast) var(--ease),
     color var(--dur-fast) var(--ease),
@@ -328,16 +329,16 @@
     transform var(--dur-fast) var(--ease);
 }
 .p-add:hover {
-  background: #fff;
-  color: #000;
+  background: #000;
+  color: #fff;
 }
 .p-add:active {
   transform: scale(0.88);
 }
 .p-add[data-state='added'] {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
+  background: #000;
+  color: #fff;
+  border-color: #000;
 }
 
 .rating {

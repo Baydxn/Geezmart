@@ -114,6 +114,8 @@ export type Database = {
           sale_start: string | null;
           sale_end: string | null;
           sale_price: number | null;
+          /** Where the product is shown on the storefront. Admin-toggled. */
+          store_page: string;
           status: Database['public']['Enums']['product_status'];
           status_reason: string;
           weight_kg: number | null;

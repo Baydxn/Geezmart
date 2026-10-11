@@ -6,6 +6,9 @@ import BottomNavigation from './BottomNavigation';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 import ToastViewport from './ToastViewport';
+import AnnouncementBanner from './AnnouncementBanner';
+import { useAnnouncements } from '../store/useCatalog';
+import { activeAnnouncements } from '../lib/api';
 import Footer from './Footer';
 
 /** Restores scroll position and closes overlays on every navigation. */
@@ -21,12 +24,15 @@ export default function AppShell() {
   const { pathname } = useLocation();
   useNavigationEffects();
   const isProductPage = pathname.startsWith('/product/');
+  const { items } = useAnnouncements();
+  const hasAnnouncement = activeAnnouncements(items).length > 0;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${hasAnnouncement ? ' has-announcement' : ''}`}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
+      <AnnouncementBanner />
       <TopNavigation />
 
       <AnimatePresence mode="wait">

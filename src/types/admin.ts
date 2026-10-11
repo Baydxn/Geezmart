@@ -44,7 +44,7 @@ export interface SeoMeta {
   ogImage: string;
 }
 
-export interface AdminProduct {
+export type AdminProduct = {
   id: string;
   sku: string;
   name: string;
@@ -65,13 +65,15 @@ export interface AdminProduct {
   weightKg: number;
   dimensions: string;
   status: ProductStatus;
+  /** Where the product is shown on the storefront. Toggled by the admin. */
+  storePage: 'shop' | 'home' | 'category' | 'none';
   visual: string;
   images: ProductImage[];
   variants: AdminVariant[];
   seo: SeoMeta;
   createdAt: string;
   updatedAt: string;
-}
+};
 
 export interface AdminCategory {
   id: string;
@@ -237,6 +239,15 @@ export interface ActivityLog {
   createdAt: string;
 }
 
+/** One row of the animated announcement ticker shown at the top of the storefront. */
+export interface Announcement {
+  id: string;
+  label: string;
+  href: string;
+  icon: string;
+  enabled: boolean;
+}
+
 export interface StoreSettings {
   storeName: string;
   storeDescription: string;
@@ -259,6 +270,7 @@ export interface StoreSettings {
     payment: boolean;
   };
   security: { sessionTimeoutMinutes: number; loginMaxAttempts: number; twoFactor: boolean };
+  announcements?: Announcement[];
   adminNav: { id: string; label: string; href: string; icon: string; hidden: boolean }[];
 }
 

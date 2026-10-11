@@ -3,6 +3,7 @@ import { store } from '../lib/db';
 import { toCategory } from '../lib/api';
 import { useDbVersion } from '../admin/AdminContext';
 import type { Category } from '../types';
+import type { Announcement } from '../types/admin';
 
 /**
  * Live category tree.
@@ -20,4 +21,16 @@ export function useCategories(): Category[] {
 export function useCategory(id: string): Category | undefined {
   const categories = useCategories();
   return categories.find((c) => c.id === id);
+}
+
+/**
+ * Announcement ticker rows from store settings.
+ *
+ * Settings travel with the hydrated snapshot, so the same `useDbVersion`
+ * subscription the other hooks use keeps this live after an admin edit.
+ * Older persisted settings may not carry the key, hence the empty fallback.
+ */
+export function useAnnouncements(): { items: Announcement[] } {
+  useDbVersion();
+  return { items: store.read().settings.announcements ?? [] };
 }

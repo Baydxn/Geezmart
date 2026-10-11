@@ -81,6 +81,9 @@ create table if not exists public.products (
   status        public.product_status not null default 'draft',
   status_reason text not null default '',
 
+  -- Where the product is shown on the storefront (admin-toggled).
+  store_page      text not null default 'shop',
+
   -- Physical attributes
   weight_kg    numeric(8,3),
   length_cm    numeric(8,2),
@@ -336,3 +339,7 @@ $$;
 create trigger trg_products_seo_defaults
   before insert or update of name, short_description, description on public.products
   for each row execute function public.default_product_seo();
+
+-- Compatibility: keep the columns the UI writes in sync (idempotent).
+alter table if exists public.products
+  add column if not exists store_page text not null default 'shop';

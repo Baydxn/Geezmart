@@ -13,7 +13,7 @@ import type {
   Product,
   VisualKind,
 } from '../types';
-import type { AdminCategory, AdminProduct, HomepageSection } from '../types/admin';
+import type { AdminCategory, AdminProduct, Announcement, HomepageSection } from '../types/admin';
 import { store, visibleProducts, activePrice, availableStock, activeBanners, homepageSections } from './db';
 
 /* ------------------------------ mapping ------------------------------ */
@@ -74,6 +74,26 @@ export function toCategory(record: AdminCategory) {
 }
 
 /* ------------------------------ queries ------------------------------ */
+
+/**
+ * Enabled ticker rows, trimmed and with a safe fallback link.
+ *
+ * Rows without a label are skipped so a half-finished admin draft never shows
+ * an empty pill in the marquee.
+ */
+export function activeAnnouncements(
+  items: Announcement[] | undefined,
+): { id: string; label: string; href: string; icon?: string }[] {
+  return (items ?? [])
+    .filter((item) => item.enabled && item.label.trim().length > 0)
+    .map((item) => ({
+      id: item.id,
+      label: item.label.trim(),
+      href: item.href || '/shop',
+      icon: item.icon || undefined,
+    }));
+}
+
 
 export const DEFAULT_FILTERS: Filters = {
   categoryIds: [],

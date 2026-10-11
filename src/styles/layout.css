@@ -12,6 +12,11 @@
     var(--bg);
 }
 
+.app-shell.has-announcement {
+  /* Reserve the marquee's height for the fixed top nav and page padding. */
+  --announce-h: 64px;
+}
+
 .page {
   flex: 1;
   width: 100%;
@@ -21,7 +26,7 @@
 }
 
 .page-pad {
-  padding-top: calc(var(--header-h) + 12px);
+  padding-top: calc(var(--announce-h, 0px) + var(--header-h) + 12px);
   padding-bottom: calc(var(--bottomnav-h) + 34px + env(safe-area-inset-bottom, 0px));
 }
 

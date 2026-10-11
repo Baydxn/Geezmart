@@ -37,6 +37,7 @@ function blankProduct(): AdminProduct {
     weightKg: 0.5,
     dimensions: '',
     status: 'draft',
+    storePage: 'shop',
     visual: 'watch',
     images: [],
     variants: [],
@@ -260,6 +261,23 @@ export default function AdminProductForm() {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div className="field">
+                <label className="label" htmlFor="p-page">Where this product appears</label>
+                <div className="row" style={{ gap: 6 }}>
+                  {(['shop', 'home', 'category', 'none'] as const).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={"chip" + (product.storePage === page ? ' is-active' : '')}
+                      style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => patch({ storePage: page })}
+                    >
+                      {page === 'shop' ? 'Shop grid' : page === 'home' ? 'Home slider' : page === 'category' ? 'Category pages' : 'Hide from listings'}
+                    </button>
+                  ))}
+                </div>
+                <p className="admin-hint">Products shown here are the only ones that can be found on that storefront area; every product keeps its own product page no matter what.</p>
               </div>
               <div className="field">
                 <label className="label" htmlFor="p-blurb">Short description</label>

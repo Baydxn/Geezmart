@@ -26,7 +26,7 @@ import type {
   Review,
   StoreSettings,
 } from '../types/admin';
-import { buildSeed, DEFAULT_SETTINGS } from '../data/seed';
+import { DEFAULT_SETTINGS } from '../data/seed';
 import { uid, nowIso } from '../data/dbHelpers';
 import {
   createNotification,
@@ -141,9 +141,9 @@ function read(): Database {
       }
     }
   } catch {
-    /* corrupted or unavailable storage falls through to a fresh seed */
+    /* corrupted or unavailable storage falls through to a fresh, empty document */
   }
-  db = buildSeed();
+  db = emptyDatabase();
   return db;
 }
 
@@ -405,7 +405,7 @@ export const store = {
       await hydrate({ force: true });
       return;
     }
-    db = buildSeed();
+    db = emptyDatabase();
     persist();
     emit();
   },

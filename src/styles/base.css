@@ -1,45 +1,46 @@
 /* ============================================================
-   GEEZMART — Design Tokens
-   Black · White · Charcoal · Subtle metallic gray
+   GEEZMART � Design Tokens
+   White background � Black top/bottom nav � Bubble-flex icon display
    ============================================================ */
 
 :root {
-  /* Surfaces */
-  --bg: #08090b;
-  --bg-elev: #0e1013;
-  --surface: #121418;
-  --surface-2: #171a1f;
-  --surface-3: #1e222a;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  /* Radii � soft bubble shapes */
+  --bg: #ffffff;
+  --bg-elev: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f4;
+  --surface-3: #e6e8eb;
+  --line-strong: rgba(0, 0, 0, 0.22);
+  --line: rgba(0, 0, 0, 0.14);
 
   /* Text */
-  --text: #ffffff;
-  --text-2: #a8adb6;
-  --text-3: #6f757e;
+  --text: #000000;
+  --text-2: #4b5159;
+  --text-3: #6b7280;
 
-  /* Accent = white only */
-  --accent: #ffffff;
-  --accent-ink: #08090b;
+  /* Accent = black only */
+  --accent: #000000;
+  --accent-ink: #ffffff;
   --metal: linear-gradient(135deg, #ffffff 0%, #b9bfc8 38%, #6d737c 62%, #e6e9ee 100%);
 
-  /* Radii — soft bubble shapes */
+  /* Radii � soft bubble shapes */
   --r-xs: 10px;
   --r-sm: 14px;
   --r-md: 20px;
   --r-lg: 26px;
   --r-xl: 32px;
-  --r-2xl: 40px;
+  --r-2xl: 44px;
   --r-pill: 999px;
 
   /* Elevation / glow */
-  --shadow-soft: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
-  --shadow-lift: 0 24px 60px -20px rgba(0, 0, 0, 0.95);
-  --glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 40px -18px rgba(255, 255, 255, 0.2);
+  --shadow-soft: 0 10px 30px -14px rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 24px 60px -22px rgba(0, 0, 0, 0.14);
+  --glow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 18px 40px -20px rgba(0, 0, 0, 0.3);
 
   /* Layout */
-  --header-h: 60px;
-  --bottomnav-h: 68px;
+  --header-h: 64px;
+  --announce-h: 0px;
+  --bottomnav-h: 82px;
   --page-max: 1280px;
   --gutter: 16px;
 
@@ -49,7 +50,7 @@
   --dur: 240ms;
   --dur-slow: 380ms;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -68,7 +69,7 @@ body {
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
@@ -80,14 +81,14 @@ body {
 }
 
 h1,
-h2,
-h3,
-h4 {
+ h2,
+ h3,
+ h4 {
   font-family: 'Sora', 'Inter', system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0;
-  line-height: 1.08;
+  line-height: 1.1;
 }
 
 h1 {
@@ -119,8 +120,8 @@ button {
 }
 
 input,
-select,
-textarea {
+ select,
+ textarea {
   font: inherit;
   color: inherit;
 }
@@ -137,14 +138,14 @@ ul {
 }
 
 :focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid #000;
   outline-offset: 3px;
   border-radius: var(--r-xs);
 }
 
 ::selection {
-  background: #fff;
-  color: #000;
+  background: #000;
+  color: #fff;
 }
 
 ::-webkit-scrollbar {
@@ -155,9 +156,26 @@ ul {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2e35;
+  background: #9aa3ad;
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3f48;
+  background: #6b7280;
+}
+
+/* ---------- Skip link ---------- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--gutter);
+  z-index: 200;
+  padding: 10px 16px;
+  background: #000;
+  color: #fff;
+  border-radius: var(--r-pill);
+  font-weight: 650;
+  transition: top var(--dur-fast) var(--ease);
+}
+.skip-link:focus {
+  top: var(--gutter);
 }
