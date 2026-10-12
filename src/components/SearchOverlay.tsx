@@ -193,10 +193,18 @@ export default function SearchOverlay() {
   useEffect(() => {
     if (searchOpen) {
       const t = window.setTimeout(() => inputRef.current?.focus(), 120);
-      return () => window.clearTimeout(t);
+      // Lock background scroll while the full-screen search is open, mirroring
+      // the cart drawer, so the page behind never scrolls under the overlay.
+      document.body.style.overflow = 'hidden';
+      return () => {
+        window.clearTimeout(t);
+        document.body.style.overflow = '';
+      };
     }
     setQuery('');
     setResults([]);
+    setCats([]);
+    document.body.style.overflow = '';
   }, [searchOpen]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 /* ============================================================
-   GEEZMART � Toasts & overlays
+   GEEZMART � Toasts & overlays
    Light theme: black + white
    ============================================================ */
 
@@ -103,15 +103,235 @@
   border-radius: var(--r-pill);
 }
 .tab {
+  position: relative;
+  flex: 1;
   padding: 8px 14px;
   border-radius: var(--r-sm);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-2);
-  transition: all var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease);
 }
-.tab.active {
+.tab > span {
+  position: relative;
+  z-index: 1;
+}
+/* Animated active indicator (Framer layoutId slides this between tabs). */
+.tab-bubble {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-sm);
   background: #fff;
-  color: #000;
+  z-index: 0;
   box-shadow: var(--shadow-soft);
 }
+.tab.active {
+  color: #000;
+}
+
+/* ============================================================
+   Full-screen overlays — search + cart drawer
+   These MUST be position:fixed so they never push page content
+   down or render under the bottom navigation.
+   ============================================================ */
+
+/* Dimmed backdrop shared by the search overlay and cart drawer. */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 150; /* above the bottom nav (120) and top nav (130) */
+  background: rgba(8, 9, 11, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ---------- Search overlay ---------- */
+
+.search {
+  position: fixed;
+  inset: 0;
+  z-index: 160; /* above its scrim */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  /* Respect the notch at the top so the bar sits below the status area. */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.search-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px var(--gutter);
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 8px 24px -20px rgba(0, 0, 0, 0.5);
+}
+
+.search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: #000;
+}
+.search-field:focus-within {
+  border-color: #000;
+  background: #fff;
+}
+.search-field svg {
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  color: #000;
+}
+.search-input::placeholder {
+  color: var(--text-3);
+}
+/* Hide the native WebKit search clear/cancel button — the UI provides its own. */
+.search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 18px var(--gutter) calc(28px + env(safe-area-inset-bottom, 0px));
+  max-width: var(--page-max);
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Recent / category suggestion rows. */
+.search-sug {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 4px;
+  border-bottom: 1px solid var(--line);
+  color: #000;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+.search-sug:hover {
+  background: var(--surface-2);
+}
+.search-sug svg {
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+.search-sug .spacer {
+  flex: 1;
+}
+.search-sug > svg:last-child {
+  color: var(--text-3);
+}
+
+/* ---------- Cart drawer ---------- */
+
+.drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  max-height: 88dvh;
+  background: #fff;
+  color: #000;
+  border-top-left-radius: var(--r-2xl);
+  border-top-right-radius: var(--r-2xl);
+  box-shadow: 0 -20px 60px -24px rgba(0, 0, 0, 0.5);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.drawer-grip {
+  width: 42px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  margin: 10px auto 4px;
+  flex: 0 0 auto;
+}
+.drawer-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px var(--gutter) 12px;
+  border-bottom: 1px solid var(--line);
+}
+.drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px var(--gutter);
+}
+.drawer-foot {
+  flex: 0 0 auto;
+  padding: 14px var(--gutter) calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+/* Cart line item. */
+.line-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+.line-thumb {
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.line-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.line-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.line-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
