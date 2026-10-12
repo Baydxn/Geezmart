@@ -1,111 +1,164 @@
 import { Link } from 'react-router-dom';
-import Icon, { type IconName } from '../components/Icon';
+import Icon from '../components/Icon';
 import { useWishlist } from '../store/WishlistContext';
 import { useOrders } from '../store/OrdersContext';
 import { useToast } from '../store/ToastContext';
-
-const USER = {
-  name: 'Eriqk Okoro',
-  email: 'eriqk@geezmart.shop',
-  phone: '+234 800 000 0000',
-};
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/authClient';
 
 export default function Account() {
   const { items } = useWishlist();
   const { orders } = useOrders();
   const { notify } = useToast();
+  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const menu: { label: string; icon: IconName; to?: string; value?: string; onClick?: () => void }[] = [
-    { label: 'My Orders', icon: 'orders', to: '/orders', value: `${orders.length}` },
-    { label: 'Saved Products', icon: 'heart', to: '/wishlist', value: `${items.length}` },
-    { label: 'Addresses', icon: 'pin', onClick: () => notify('Address book coming soon') },
-    { label: 'Payment Methods', icon: 'card', onClick: () => notify('No saved payment methods yet') },
-    { label: 'Notifications', icon: 'bell', onClick: () => notify('Notifications are all caught up') },
-    { label: 'Help & Support', icon: 'help', onClick: () => notify('Support: help@geezmart.shop') },
-    { label: 'Settings', icon: 'settings', onClick: () => notify('Settings saved automatically') },
-  ];
+  const { user, signIn, signUp, signOut } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+
+    try {
+      if (isLogin) {
+        await signIn(email, password);
+      } else {
+        if (!name.trim()) { setError('Name is required.'); setBusy(false); return; }
+        await signUp(name.trim(), email.trim(), password);
+      }
+      navigate('/account', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <>
-      <header className="page-head">
-        <div>
-          <p className="section-kicker">Profile</p>
-          <h1 className="page-title">Account</h1>
-        </div>
-      </header>
-
-      <section className="account-hero">
-        <span className="avatar" aria-hidden="true">
-          EO
-        </span>
-        <div className="stack" style={{ gap: 4, minWidth: 0 }}>
-          <h2 style={{ fontSize: 19 }}>{USER.name}</h2>
-          <p className="text-3 t-xs clamp-2">{USER.email}</p>
-          <p className="text-3 t-xs">{USER.phone}</p>
-        </div>
-        <span className="spacer" />
-        <span className="status-pill" data-tone="solid">
-          Member
-        </span>
-      </section>
-
-      <div className="row" style={{ gap: 10, marginTop: 16 }}>
-        <div className="summary" style={{ flex: 1 }}>
-          <div className="summary-row">
-            <span className="text-3 t-sm">Orders</span>
-            <strong>{orders.length}</strong>
+    <div className="auth-wrapper" style={{ maxWidth: 480, margin: "40px auto", padding: "0 16px" }}>
+      {!user && (
+        <div className="auth-card" style={{ padding: 24, borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h1 style={{ margin: 0, fontSize: 22 }}>{isLogin ? 'Sign in' : 'Create account'}</h1>
+            <button type="button" style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", fontSize: 13 }}
+              onClick={() => { setIsLogin(prev => !prev); setError(null); }}>
+              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+            </button>
           </div>
-        </div>
-        <div className="summary" style={{ flex: 1 }}>
-          <div className="summary-row">
-            <span className="text-3 t-sm">Saved</span>
-            <strong>{items.length}</strong>
-          </div>
-        </div>
-      </div>
 
-      <div className="stack" style={{ gap: 10, marginTop: 18 }}>
-        {menu.map((item) => {
-          const inner = (
-            <>
-              <span className="menu-icon">
-                <Icon name={item.icon} size={18} />
-              </span>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {!isLogin && (
+              <input type="text" value={name} placeholder="Full name"
+                style={{ padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 14 }}
+                onChange={(e) => setName(e.target.value)} disabled={busy} autoComplete="name" />
+            )}
+
+            <input type="email" value={email} placeholder="Email address"
+              style={{ padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 14 }}
+              onChange={(e) => setEmail(e.target.value)} disabled={busy} autoComplete="email" />
+
+            <input type="password" value={password} placeholder="Password"
+              style={{ padding: "10px 12px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 14 }}
+              onChange={(e) => setPassword(e.target.value)} disabled={busy}
+              autoComplete={isLogin ? 'current-password' : 'new-password'} />
+
+            {error && <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>}
+
+            <button type="submit" style={{ padding: "12px", borderRadius: 6, background: "#222", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", border: "none" }}
+              disabled={busy}>
+              {busy ? (isLogin ? 'Signing in...') : (isLogin ? 'Sign In' : 'Create Account')}
+            </button>
+          </form>
+
+          <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--text-2)" }}>
+            Staff?{' '}
+            <a href="/admin/login" style={{ color: "var(--primary)" }}>Sign in to admin</a>
+          </p>
+        </div>
+      )}
+
+      {user && (
+        <>
+          <div className="account-hero" style={{ marginTop: 24, textAlign: "center" }}>
+            <span className="avatar" style={{ fontSize: 28 }}>
+              {user.name?.[0] || 'U'}
+            </span>
+            <h2 style={{ fontSize: 19 }}>{user.name || 'Guest'}</h2>
+            <p className="text-3 t-xs" style={{ color: "var(--text-2)" }}>
+              {user.email}
+            </p>
+          </div>
+
+          <div className="row" style={{ gap: 10, marginTop: 16 }}>
+            <div className="summary" style={{ flex: 1 }}>
+              <div className="summary-row">
+                <span className="text-3 t-sm">My Orders</span>
+                <strong>{orders.length}</strong>
+              </div>
+            </div>
+            <div className="summary" style={{ flex: 1 }}>
+              <div className="summary-row">
+                <span className="text-3 t-sm">Saved</span>
+                <strong>{items.length}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="stack" style={{ gap: 10, marginTop: 18 }}>
+            { [
+              { label: 'My Orders', icon: 'orders' as IconName, to: '/orders' },
+              { label: 'Saved Products', icon: 'heart' as IconName, to: '/wishlist' },
+              { label: 'Addresses', icon: 'pin' as IconName },
+              { label: 'Payment Methods', icon: 'card' as IconName },
+              { label: 'Notifications', icon: 'bell' as IconName },
+              { label: 'Help & Support', icon: 'help' as IconName },
+              { label: 'Settings', icon: 'settings' as IconName },
+            ].map((item) => {
+              const inner = (
+                <>
+                  <span className="menu-icon"><Icon name={item.icon} size={18} /></span>
+                  <span className="stack" style={{ gap: 2 }}>
+                    <span className="semi t-md">{item.label}</span>
+                    {item.to ? <span className="text-3 t-xs">view all</span> : null}
+                  </span>
+                  <span className="spacer" />
+                  <Icon name="chevronRight" size={16} className="text-3" />
+                </>
+              );
+              return item.to ? (
+                <Link key={item.label} className="menu-card" to={item.to}>{inner}</Link>
+              ) : (
+                <button key={item.label} type="button" className="menu-card" onClick={() => notify('Coming soon')}>
+                  {inner}
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              className="menu-card"
+              onClick={() => { signOut(); }}
+            >
+              <span className="menu-icon"><Icon name="logout" size={18} /></span>
               <span className="stack" style={{ gap: 2 }}>
-                <span className="semi t-md">{item.label}</span>
-                {item.value ? <span className="text-3 t-xs">{item.value} total</span> : null}
+                <span className="semi t-md">Sign Out</span>
+                <span className="text-3 t-xs">Sign out of this device</span>
               </span>
               <span className="spacer" />
               <Icon name="chevronRight" size={16} className="text-3" />
-            </>
-          );
-          return item.to ? (
-            <Link key={item.label} className="menu-card" to={item.to}>
-              {inner}
-            </Link>
-          ) : (
-            <button key={item.label} type="button" className="menu-card" onClick={item.onClick}>
-              {inner}
             </button>
-          );
-        })}
-
-        <button
-          type="button"
-          className="menu-card"
-          onClick={() => notify('You have been signed out')}
-        >
-          <span className="menu-icon">
-            <Icon name="logout" size={18} />
-          </span>
-          <span className="stack" style={{ gap: 2 }}>
-            <span className="semi t-md">Logout</span>
-            <span className="text-3 t-xs">Sign out of this device</span>
-          </span>
-          <span className="spacer" />
-          <Icon name="chevronRight" size={16} className="text-3" />
-        </button>
-      </div>
-    </>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
+

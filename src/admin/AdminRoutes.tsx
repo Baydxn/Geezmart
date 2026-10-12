@@ -69,39 +69,39 @@ export default function AdminRoutes() {
     <AdminAuthProvider>
       <Suspense fallback={<div className="admin-empty"><p className="admin-hint">Loading…</p></div>}>
         <Routes>
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/login" element={<AdminLogin />} />
 
-        <Route
-          path="/admin"
-          element={
-            <RequireAuth>
-              <AdminShell />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<Section permission="products"><AdminProducts /></Section>} />
-          <Route path="products/new" element={<Section permission="products"><AdminProductForm /></Section>} />
-          <Route path="products/:id/edit" element={<Section permission="products"><AdminProductForm /></Section>} />
-          <Route path="categories" element={<Section permission="categories"><AdminCategories /></Section>} />
-          <Route path="orders" element={<Section permission="orders"><AdminOrders /></Section>} />
-          <Route path="orders/:id" element={<Section permission="orders"><AdminOrderDetail /></Section>} />
-          <Route path="customers" element={<Section permission="customers"><AdminCustomers /></Section>} />
-          <Route path="customers/:id" element={<Section permission="customers"><AdminCustomerDetail /></Section>} />
-          <Route path="checkouts" element={<Section permission="checkouts"><AdminCheckouts /></Section>} />
-          <Route path="inventory" element={<Section permission="inventory"><AdminInventory /></Section>} />
-          <Route path="coupons" element={<Section permission="products"><AdminCoupons /></Section>} />
-          <Route path="reviews" element={<Section permission="reviews"><AdminReviews /></Section>} />
-          <Route path="homepage" element={<Section permission="homepage"><AdminHomepage /></Section>} />
-          <Route path="banners" element={<Section permission="banners"><AdminBanners /></Section>} />
-          <Route path="pages" element={<Section permission="pages"><AdminPages /></Section>} />
-          <Route path="media" element={<Section permission="media"><AdminMedia /></Section>} />
-          <Route path="analytics" element={<Section permission="analytics"><AdminAnalytics /></Section>} />
-          <Route path="activity" element={<Section permission="activity"><AdminActivity /></Section>} />
-          <Route path="settings" element={<Section permission="settings"><AdminSettings /></Section>} />
-        </Route>
+          <Route
+            path=""
+            element={
+              <RequireAuth>
+                <AdminShell />
+              </RequireAuth>
+            }
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<Section permission="products"><AdminProducts /></Section>} />
+            <Route path="products/new" element={<Section permission="products"><AdminProductForm /></Section>} />
+            <Route path="products/:id/edit" element={<Section permission="products"><AdminProductForm /></Section>} />
+            <Route path="categories" element={<Section permission="categories"><AdminCategories /></Section>} />
+            <Route path="orders" element={<Section permission="orders"><AdminOrders /></Section>} />
+            <Route path="orders/:id" element={<Section permission="orders"><AdminOrderDetail /></Section>} />
+            <Route path="customers" element={<Section permission="customers"><AdminCustomers /></Section>} />
+            <Route path="customers/:id" element={<Section permission="customers"><AdminCustomerDetail /></Section>} />
+            <Route path="checkouts" element={<Section permission="checkouts"><AdminCheckouts /></Section>} />
+            <Route path="inventory" element={<Section permission="inventory"><AdminInventory /></Section>} />
+            <Route path="coupons" element={<Section permission="products"><AdminCoupons /></Section>} />
+            <Route path="reviews" element={<Section permission="reviews"><AdminReviews /></Section>} />
+            <Route path="homepage" element={<Section permission="homepage"><AdminHomepage /></Section>} />
+            <Route path="banners" element={<Section permission="banners"><AdminBanners /></Section>} />
+            <Route path="pages" element={<Section permission="pages"><AdminPages /></Section>} />
+            <Route path="media" element={<Section permission="media"><AdminMedia /></Section>} />
+            <Route path="analytics" element={<Section permission="analytics"><AdminAnalytics /></Section>} />
+            <Route path="activity" element={<Section permission="activity"><AdminActivity /></Section>} />
+            <Route path="settings" element={<Section permission="settings"><AdminSettings /></Section>} />
+          </Route>
 
-        <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </Suspense>
     </AdminAuthProvider>

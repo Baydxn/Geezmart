@@ -215,6 +215,59 @@ export async function signIn(email: string, password: string, remember: boolean)
   return { ok: true, session };
 }
 
+/* ----------------------------- account creation ----------------------------- */
+
+export interface SignUpUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export type SignUpResult =
+  | { ok: true; user: SignUpUser }
+  | { ok: false; error: string };
+
+export async function signUp(
+  name: string,
+  email: string,
+  password: string,
+  role: AdminRole,
+): Promise<SignUpResult> {
+  const normalised = email.trim().toLowerCase();
+
+  if (!name.trim()) return { ok: false, error: 'Name is required.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalised)) {
+    return { ok: false, error: 'Enter a valid email address.' };
+  }
+  if (password.length < 8) return { ok: false, error: 'Password must be at least 8 characters.' };
+
+  if (!isSupabaseConfigured) {
+    return { ok: false, error: 'Sign-up is not configured on this project.' };
+  }
+
+  const sb = supabase();
+  if (!sb) return { ok: false, error: 'Supabase is not configured.' };
+
+  const { data, error } = await sb.auth.signUp({ email: normalised, password });
+  if (error || !data.user) {
+    const message = error?.message ?? 'Could not create your account.';
+    return { ok: false, error: message };
+  }
+
+  // The commerce profile drives the admin roster (role = staff), and is read by
+  // RLS in `roles` policies. Insert it with the anon key (profiles has no RLS).
+  const { error: profileError } = await requireClient()
+    .from('profiles')
+    .insert({ id: data.user.id, name: name.trim(), email: normalised, role, status: 'active' });
+
+  if (profileError) {
+    await sb.auth.signOut();
+    return { ok: false, error: `Profile could not be created: ${profileError.message}` };
+  }
+
+  return { ok: true, user: { id: data.user.id, email: normalised, name: name.trim() } };
+}
+
 /** Signs out of Supabase Auth and drops the local session envelope. */
 export async function signOut(): Promise<void> {
   const sb = supabase();
