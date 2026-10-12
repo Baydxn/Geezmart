@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon, { type IconName } from './Icon';
 import Logo from './Logo';
-import SupabaseBadge from './SupabaseBadge';
 import { useCategories } from '../store/useCatalog';
 
 /** Static footer columns; the Categories column is filled from live data. */
@@ -85,7 +84,6 @@ export default function Footer() {
       <div className="footer-base">
         <span className="row" style={{ gap: 10 }}>
           <span>&copy; {new Date().getFullYear()} GEEZMART. All rights reserved.</span>
-          <SupabaseBadge compact />
         </span>
         <span className="row" style={{ gap: 14 }}>
           <Link to="/account">Privacy</Link>

@@ -177,7 +177,7 @@
   z-index: 0;
   box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.7);
 }
-.bottomnav-item > * {
+.bottomnav-item > span:not(.bottomnav-bubble) {
   position: relative;
   z-index: 1;
 }
@@ -235,7 +235,7 @@
     background: #fff;
     z-index: 0;
   }
-  .desknav-link span {
+  .desknav-link > span:not(.desknav-bubble) {
     position: relative;
     z-index: 1;
   }

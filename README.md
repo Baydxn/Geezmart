@@ -1,4 +1,4 @@
-﻿# GEEZMART
+# GEEZMART
 
 **Storefront + Control Center.** A premium men's lifestyle marketplace (black / white / charcoal,
 bubble-shaped UI) paired with a full admin panel mounted at `/admin` on the same domain.
@@ -13,21 +13,18 @@ npm install
 npm run dev        # http://localhost:5173  (admin at /admin)
 npm run build      # tsc -b + production bundle
 npm run lint       # oxlint
-npm run check:smoke# SSR-renders all 15 routes to catch runtime errors
+npm run check:smoke# SSR-renders all routes to catch runtime errors
 ```
 
-### Admin sign-in (demo)
+### Admin sign-in
 
-| Email | Role |
-| --- | --- |
-| `admin@geezmart.ng` | Super Admin |
-| `manager@geezmart.ng` | Product Manager |
-| `orders@geezmart.ng` | Order Manager |
+The admin panel at `/admin` is protected by Supabase Auth. Sign in with a Supabase Auth account
+that also carries a **staff role** in the `profiles` table (any role other than `customer`).
+Non-staff accounts are rejected even when the password is correct, and every privileged action is
+additionally enforced by Postgres row-level security — the frontend guards are UX only.
 
-Password for all demo accounts: `GEEZMART2024!`
-
-Passwords are stored as **PBKDF2-SHA256 (120k iterations, per-user salt)** hashes and verified in
-`src/admin/auth.ts`. Plaintext is never persisted, displayed or transmitted.
+> **No credentials are stored in this repository.** Create your own staff account in Supabase and
+> assign it a staff role; never commit passwords.
 
 ## Architecture
 
@@ -35,23 +32,23 @@ Passwords are stored as **PBKDF2-SHA256 (120k iterations, per-user salt)** hashe
 src/
   admin/                 Control center (same design language, denser layout)
     AdminRoutes.tsx      /admin routes + auth + per-role permission guards
-    auth.ts             PBKDF2 hashing, sessions, login rate limiting
-    AdminContext.tsx    useAdminAuth + useDbVersion (re-renders on data changes)
-    components/         AdminShell, DataTable, SalesChart, RichTextEditor,
-                        ImageUploader, SeoEditor, Modal/ConfirmDialog, ui kit
-    pages/              dashboard, products, product form, categories, orders,
-                        customers, inventory, coupons, reviews, homepage,
-                        banners, pages, media, analytics, activity, settings, login
-  pages/                Customer storefront screens
-  components/           Storefront UI (header, bottom nav, cards, drawers, ...)
-  store/                Cart, Wishlist, Orders, Toast, UI contexts
-  data/                 seed + categories + demo products + helpers
+    auth.ts              Supabase Auth sign-in, sessions, login rate limiting
+    AdminContext.tsx     useAdminAuth + useDbVersion (re-renders on data changes)
+    components/          AdminShell, DataTable, SalesChart, RichTextEditor,
+                          ImageUploader, SeoEditor, Modal/ConfirmDialog, ui kit
+    pages/               dashboard, products, product form, categories, orders,
+                          customers, inventory, coupons, reviews, homepage,
+                          banners, pages, media, analytics, activity, settings, login
+  pages/                 Customer storefront screens
+  components/            Storefront UI (header, bottom nav, cards, drawers, ...)
+  store/                 Cart, Wishlist, Orders, Toast, UI contexts
+  data/                  seed + categories + helpers
   lib/
-    db.ts               THE CONTROL PLANE - one shared, reactive data document
-    api.ts              Storefront query layer (reads the control plane)
-    supabase.ts         Supabase client, connection probe, realtime, schema SQL
-    productImage.ts     Generated cinematic product visuals
-  styles/               Design tokens + component CSS (incl. admin.css)
+    db.ts                THE CONTROL PLANE - one shared, reactive data document
+    api.ts               Storefront query layer (reads the control plane)
+    supabase.ts          Supabase client, connection probe, realtime, schema SQL
+    productImage.ts      Generated cinematic product visuals
+  styles/                Design tokens + component CSS (incl. admin.css)
 ```
 
 ### The control plane (`src/lib/db.ts`)
@@ -71,11 +68,12 @@ API calls. No component changes required.
 
 ## Supabase
 
-Set these in `.env` (local) and in the Cloudflare dashboard (production):
+Copy `.env.example` to `.env` and fill in your project's values (local), and set the same
+variables in your host's dashboard (production):
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://ahijotxtncavfnhohxrw.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ufmCHhZ8c4NW58NpMsn-kQ_uAOZdqLM
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-publishable-key>
 ```
 
 - `src/lib/supabase.ts` creates the client, probes the connection, exposes realtime helpers and
@@ -83,9 +81,10 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_ufmCHhZ8c4NW58NpMsn-kQ_uAOZd
 - The app **degrades gracefully**: without credentials the local control plane keeps every screen
   working, so a fresh clone runs with zero setup.
 - Admin → Settings → Backend shows live connection status and a "copy SQL" button.
-- Only *publishable* keys belong here. Service-role keys stay in Cloudflare secrets / Pages Functions.
+- Only *publishable* keys belong here. Service-role keys stay server-side and are never bundled
+  into the client.
 
-## Deploying to Cloudflare Pages
+## Deploying
 
 The repo is already connected. Required settings:
 
@@ -98,18 +97,19 @@ The repo is already connected. Required settings:
 
 Supporting files already committed:
 
-- `wrangler.toml` — Pages config (`pages_build_output_dir = "dist"`)
-- `public/_redirects` — SPA fallback so deep links like `/admin/products` work on refresh
+- `vercel.json` — SPA rewrite so deep links like `/admin/products` work on refresh
+- `wrangler.toml` — Cloudflare Workers/Pages config (`not_found_handling = "single-page-application"`)
 - `public/_headers` — security headers + immutable asset caching
 - `build` script wraps the bundler with `NODE_OPTIONS=--max-old-space-size=4096` via `cross-env`,
-  which fixes the heap-exhaustion failure Cloudflare was showing
+  which fixes the heap-exhaustion failure some hosts were showing
 
 ## Security notes
 
 - Admin routes are guarded (`RequireAuth`) and section access is role-gated (`RequirePermission`).
-  **The frontend guards are UX only — mirror every check in your API.**
+  **The frontend guards are UX only — Postgres RLS is the real security boundary.**
 - Login is rate limited with lockout; sessions are short-lived tokens in sessionStorage (or
   localStorage with "remember me"), never passwords.
+- A visitor's public Account page exposes no link or hint to the admin panel.
 - Cost prices, margin figures and customer notes never render on the storefront.
 - Uploaded files are validated by type and size before they enter the library.
 - Secrets are referenced by env-var name only (`PAYMENT_CARD_SECRET_KEY`); never stored client-side.

@@ -106,11 +106,6 @@ export default function Account() {
               </button>
             </p>
           )}
-
-          <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--text-2)" }}>
-            Staff?{' '}
-            <a href="/admin/login" style={{ color: "var(--primary)" }}>Sign in to admin</a>
-          </p>
         </div>
       )}
 
