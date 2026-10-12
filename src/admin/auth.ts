@@ -248,17 +248,28 @@ export async function signUp(
   const sb = supabase();
   if (!sb) return { ok: false, error: 'Supabase is not configured.' };
 
-  const { data, error } = await sb.auth.signUp({ email: normalised, password });
+  // Pass the requested role through user metadata so the `handle_new_user`
+  // database trigger provisions the profile with the correct staff role.
+  const { data, error } = await sb.auth.signUp({
+    email: normalised,
+    password,
+    options: { data: { name: name.trim(), role } },
+  });
   if (error || !data.user) {
     const message = error?.message ?? 'Could not create your account.';
     return { ok: false, error: message };
   }
 
   // The commerce profile drives the admin roster (role = staff), and is read by
-  // RLS in `roles` policies. Insert it with the anon key (profiles has no RLS).
+  // RLS in `roles` policies. The trigger normally creates this row already; the
+  // upsert is a defensive fallback so a project without the trigger still works
+  // and a duplicate-key error is never thrown.
   const { error: profileError } = await requireClient()
     .from('profiles')
-    .insert({ id: data.user.id, name: name.trim(), email: normalised, role, status: 'active' });
+    .upsert(
+      { id: data.user.id, name: name.trim(), email: normalised, role, status: 'active' },
+      { onConflict: 'id' },
+    );
 
   if (profileError) {
     await sb.auth.signOut();

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import Icon from '../components/Icon';
+import Icon, { type IconName } from '../components/Icon';
 import { useWishlist } from '../store/WishlistContext';
 import { useOrders } from '../store/OrdersContext';
 import { useToast } from '../store/ToastContext';
@@ -17,11 +17,30 @@ export default function Account() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
 
-  const { user, signIn, signUp, signOut } = useAuth();
+  const { user, signIn, signUp, signOut, resetPassword } = useAuth();
 
-  const handleSubmit = async (e) => {
+  const handleReset = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address first, then tap "Forgot password?".');
+      return;
+    }
+    setResetting(true);
+    setError(null);
+    try {
+      await resetPassword(email.trim());
+      setNotice('Password recovery link sent. Check your email to reset your password.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send recovery email.');
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
@@ -36,7 +55,7 @@ export default function Account() {
       }
       navigate('/account', { replace: true });
     } catch (err) {
-      setError(err.message || 'Something went wrong.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setBusy(false);
     }
@@ -71,12 +90,22 @@ export default function Account() {
               autoComplete={isLogin ? 'current-password' : 'new-password'} />
 
             {error && <p style={{ color: "var(--error)", fontSize: 13 }}>{error}</p>}
+            {notice && <p style={{ color: "#0a7d33", fontSize: 13 }}>{notice}</p>}
 
             <button type="submit" style={{ padding: "12px", borderRadius: 6, background: "#222", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", border: "none" }}
               disabled={busy}>
-              {busy ? (isLogin ? 'Signing in...') : (isLogin ? 'Sign In' : 'Create Account')}
+              {busy ? 'Signing in...' : isLogin ? 'Sign In' : 'Create Account'}
             </button>
           </form>
+
+          {isLogin && (
+            <p style={{ textAlign: "right", marginTop: 10 }}>
+              <button type="button" onClick={handleReset} disabled={resetting}
+                style={{ background: "transparent", border: "none", color: "var(--primary)", fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                {resetting ? 'Sending…' : 'Forgot password?'}
+              </button>
+            </p>
+          )}
 
           <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "var(--text-2)" }}>
             Staff?{' '}

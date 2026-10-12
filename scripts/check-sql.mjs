@@ -148,18 +148,24 @@ for (const file of [...files, '../seed.sql']) {
       tableColumns.get(t).add(addCol[2].toLowerCase());
     }
 
-    // policy / trigger / index target must exist
-    const pol = /^create\s+policy\b[\s\S]*?\bon\s+(?:public\.)?(\w+)\b/i.exec(stmt);
-    if (pol && !createdTables.has(pol[1].toLowerCase())) {
-      errors.push(`${name}: policy targets unknown table "${pol[1]}"`);
+    // policy / trigger / index target must exist. Targets may be schema
+    // qualified (e.g. auth.users), so capture an optional schema prefix and
+    // validate the full schema.table name.
+    const normT = (schema, table) => (schema && schema.toLowerCase() !== 'public.' ? schema.toLowerCase() : '') + table.toLowerCase();
+    const pol = /^create\s+policy\b[\s\S]*?\bon\s+((?:public|auth|storage)\.)?(\w+)\b/i.exec(stmt);
+    if (pol) {
+      const full = normT(pol[1], pol[2]);
+      if (!createdTables.has(full)) errors.push(`${name}: policy targets unknown table "${full}"`);
     }
-    const trig = /^create\s+trigger\s+(\w+)[\s\S]*?\bon\s+(?:public\.)?(\w+)\b/i.exec(stmt);
-    if (trig && !createdTables.has(trig[2].toLowerCase())) {
-      errors.push(`${name}: trigger "${trig[1]}" targets unknown table "${trig[2]}"`);
+    const trig = /^create\s+trigger\s+(\w+)[\s\S]*?\bon\s+((?:public|auth|storage)\.)?(\w+)\b/i.exec(stmt);
+    if (trig) {
+      const full = normT(trig[2], trig[3]);
+      if (!createdTables.has(full)) errors.push(`${name}: trigger "${trig[1]}" targets unknown table "${full}"`);
     }
-    const idx = /^create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(\w+)\s+on\s+(?:public\.)?(\w+)/i.exec(stmt);
-    if (idx && !createdTables.has(idx[2].toLowerCase())) {
-      errors.push(`${name}: index "${idx[1]}" targets unknown table "${idx[2]}"`);
+    const idx = /^create\s+(?:unique\s+)?index\s+(?:if\s+not\s+exists\s+)?(\w+)\s+on\s+((?:public|auth|storage)\.)?(\w+)/i.exec(stmt);
+    if (idx) {
+      const full = normT(idx[2], idx[3]);
+      if (!createdTables.has(full)) errors.push(`${name}: index "${idx[1]}" targets unknown table "${full}"`);
     }
   }
 }
