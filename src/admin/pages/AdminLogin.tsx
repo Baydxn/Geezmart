@@ -39,6 +39,12 @@ export default function AdminLogin() {
       setError(`Too many attempts. Try again in ${seconds}s.`);
       return;
     }
+    if (result.reason === 'forbidden') {
+      setError(
+        'Password accepted, but this account is not an admin. Ask a Super Admin to set your role in the profiles table, then try again.',
+      );
+      return;
+    }
     setError('Invalid email or password.');
   };
 

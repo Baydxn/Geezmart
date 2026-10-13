@@ -116,7 +116,7 @@ export function clearSession() {
 
 export type LoginResult =
   | { ok: true; session: AdminSession }
-  | { ok: false; reason: 'invalid' | 'locked' | 'rate' };
+  | { ok: false; reason: 'invalid' | 'locked' | 'rate' | 'forbidden' };
 
 function isStaffRole(role: string): role is AdminRole {
   return role !== 'customer';
@@ -166,14 +166,16 @@ export async function signIn(email: string, password: string, remember: boolean)
 
   const row = (profile as { id?: string; role?: string; name?: string; email?: string; status?: string } | null) ?? null;
   if (!row || !row.id || !row.role || !isStaffRole(row.role)) {
-    // Authenticated, but not staff — sign out immediately and treat as invalid.
+    // Password was correct, but this Supabase account has no staff row in
+    // `profiles` (or its role is 'customer'). Sign out and report it distinctly
+    // so the operator can tell "wrong password" apart from "not an admin".
     await sb.auth.signOut();
-    return recordFailure();
+    return { ok: false, reason: 'forbidden' } as const;
   }
 
   if (row.status === 'suspended') {
     await sb.auth.signOut();
-    return recordFailure();
+    return { ok: false, reason: 'forbidden' } as const;
   }
 
   const existing = store.read().admins.find((a) => a.id === row.id);
