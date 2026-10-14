@@ -28,6 +28,8 @@ export default function Checkout() {
 
   const [step, setStep] = useState(0);
 
+  const [form, setForm] = useState<CheckoutForm>(EMPTY_FORM);
+
   // Opening checkout is itself a recovery signal.
   useEffect(() => {
     void saveCheckoutStep(1, {
@@ -38,7 +40,6 @@ export default function Checkout() {
     // Intentionally runs once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [form, setForm] = useState<CheckoutForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({});
   const [payment, setPayment] = useState<PaymentMethod>('card');
   const [placing, setPlacing] = useState(false);

@@ -11,6 +11,7 @@
  * products table before an order is written.
  */
 import { supabase, cartSessionToken, isSupabaseConfigured } from './client';
+export { isSupabaseConfigured };
 import type { TableUpdate } from './types';
 import type {
   AbandonedStage,
@@ -118,6 +119,20 @@ export async function addToSupabaseCart(lines: CartLineInput[]): Promise<boolean
   const { error } = await sb.from('cart_items').upsert(rows, {
     onConflict: 'cart_id,product_id,variant_id',
   });
+  return !error;
+}
+
+/**
+ * Removes every line from the caller's cart without deleting the cart row
+ * itself (the session token is used for abandoned-checkout recovery).
+ */
+export async function clearSupabaseCart(): Promise<boolean> {
+  const sb = supabase();
+  if (!sb) return false;
+  const cartId = await ensureCart();
+  if (!cartId) return false;
+
+  const { error } = await sb.from('cart_items').delete().eq('cart_id', cartId);
   return !error;
 }
 

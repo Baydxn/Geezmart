@@ -13,6 +13,12 @@ import { toProduct } from '../lib/api';
 import { store, visibleProducts } from '../lib/db';
 import { useDbVersion } from '../admin/AdminContext';
 import { useToast } from './ToastContext';
+import {
+  addToSupabaseCart,
+  clearSupabaseCart,
+  isSupabaseConfigured,
+  readSupabaseCart,
+} from '../lib/supabase/storefront';
 
 /* ============================================================
    Cart — persisted to localStorage, ready for a server cart API
@@ -81,7 +87,20 @@ function reducer(state: CartLine[], action: Action): CartLine[] {
  * Derived on every render so a price or stock edit in the admin panel is
  * reflected in an open cart immediately.
  */
-function load(): CartLine[] {
+async function load(): Promise<CartLine[]> {
+  // Supabase owns the cart, so prefer it over the device-local cache.
+  if (isSupabaseConfigured) {
+    const cart = await readSupabaseCart();
+    if (cart && cart.items?.length) {
+      return cart.items.map((l) => ({
+        lineId: `${l.product_id}:${l.variant_id ?? 'default'}`,
+        productId: l.product_id,
+        variantId: l.variant_id ?? 'default',
+        quantity: l.quantity,
+        addedAt: Date.now(),
+      }));
+    }
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -124,7 +143,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { notify } = useToast();
 
   useEffect(() => {
-    dispatch({ type: 'hydrate', lines: load() });
+    void load().then((lines) => dispatch({ type: 'hydrate', lines }));
   }, []);
 
   useEffect(() => {
@@ -172,6 +191,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     (product: Product, variantId?: string, quantity = 1) => {
       const variant = variantId ?? product.colors[0]?.id ?? 'default';
       dispatch({ type: 'add', productId: product.id, variantId: variant, quantity });
+      void addToSupabaseCart([
+        { productId: product.id, variantId: variant, quantity, unitPrice: product.price },
+      ]);
       notify(`Added to cart — ${product.name}`, 'success');
     },
     [notify],
@@ -190,7 +212,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [lines, notify],
   );
 
-  const clear = useCallback(() => dispatch({ type: 'clear' }), []);
+  const clear = useCallback(() => {
+    dispatch({ type: 'clear' });
+    void clearSupabaseCart();
+  }, []);
 
   const value = useMemo<CartContextValue>(
     () => ({
