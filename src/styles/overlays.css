@@ -141,8 +141,8 @@
   inset: 0;
   z-index: 150; /* above the bottom nav (120) and top nav (130) */
   background: rgba(8, 9, 11, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: none;
   padding: 0;
   cursor: pointer;
@@ -335,3 +335,112 @@
   margin-top: 4px;
 }
 
+/* ============================================================
+   Filter + sort panel — clean centred modal (no bottom sheet)
+   ============================================================ */
+.sheet {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(94vw, 620px);
+  max-height: 88dvh;
+  overflow-y: auto;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  box-shadow: var(--shadow-lift);
+  padding: 20px;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.sheet-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.sheet-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.sheet-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.opt-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.opt-card:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-elev);
+}
+.opt-card[data-active='true'] {
+  border-color: #000;
+  background: var(--bg-elev);
+  color: #000;
+}
+.opt-radio {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border-radius: var(--r-pill);
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  position: relative;
+}
+.opt-card[data-active='true'] .opt-radio {
+  border-color: #000;
+  background: #000;
+}
+
+/* ============================================================
+   Notifications panel (admin) — centred dialog
+   ============================================================ */
+.list-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: var(--r-md);
+  transition: background var(--dur-fast) var(--ease);
+  text-decoration: none;
+  color: inherit;
+}
+.list-row:hover {
+  background: var(--surface-2);
+}
+.notif-dot {
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ff4d4d;
+  margin-top: 4px;
+}

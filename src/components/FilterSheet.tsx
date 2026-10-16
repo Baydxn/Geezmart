@@ -14,7 +14,7 @@ interface FilterSheetProps {
   resultCount: number;
 }
 
-/** Filter + sort bottom sheet (centred modal on desktop). */
+/** Filter + sort panel — a clean centred modal (no bottom-sheet slide). */
 export default function FilterSheet({ filters, sort, onChange, onSort, resultCount }: FilterSheetProps) {
   const { sheet, closeSheet } = useUI();
   const open = sheet !== null;
@@ -43,9 +43,9 @@ export default function FilterSheet({ filters, sort, onChange, onSort, resultCou
             role="dialog"
             aria-modal="true"
             aria-label={sheet === 'sort' ? 'Sort products' : 'Filter products'}
-            initial={{ y: '100%', opacity: 0.6 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0.6 }}
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 6 }}
             transition={{ type: 'spring', stiffness: 320, damping: 34 }}
           >
             <header className="sheet-head">
