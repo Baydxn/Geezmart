@@ -343,6 +343,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  z-index: 170; /* above the scrim (150) so the panel is clickable */
   width: min(94vw, 620px);
   max-height: 88dvh;
   overflow-y: auto;
