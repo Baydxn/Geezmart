@@ -38,16 +38,17 @@ export default function FilterSheet({ filters, sort, onChange, onSort, resultCou
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           />
-          <motion.section
-            className="sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label={sheet === 'sort' ? 'Sort products' : 'Filter products'}
-            initial={{ opacity: 0, scale: 0.96, y: 14 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 6 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 34 }}
-          >
+          <div className="sheet-wrapper">
+            <motion.section
+              className="sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label={sheet === 'sort' ? 'Sort products' : 'Filter products'}
+              initial={{ opacity: 0, scale: 0.96, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 6 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+            >
             <header className="sheet-head">
               <h2 style={{ fontSize: 18 }}>{sheet === 'sort' ? 'Sort By' : 'Filters'}</h2>
               <button type="button" className="icon-btn icon-btn-sm" onClick={closeSheet} aria-label="Close">
@@ -110,6 +111,7 @@ export default function FilterSheet({ filters, sort, onChange, onSort, resultCou
               </footer>
             ) : null}
           </motion.section>
+          </div>
         </>
       ) : null}
     </AnimatePresence>

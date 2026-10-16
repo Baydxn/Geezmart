@@ -338,12 +338,15 @@
 /* ============================================================
    Filter + sort panel — clean centred modal (no bottom sheet)
    ============================================================ */
-.sheet {
+.sheet-wrapper {
   position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 170; /* above the scrim (150) so the panel is clickable */
+  inset: 0;
+  z-index: 165; /* above the scrim (150) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sheet {
   width: min(94vw, 620px);
   max-height: 88dvh;
   overflow-y: auto;
