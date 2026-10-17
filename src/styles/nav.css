@@ -113,24 +113,39 @@
 
 .bottomnav-wrap {
   position: fixed;
+  inset: auto 0 0 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 100;
+  z-index: 150;
   width: 100%;
-  padding: 0 env(safe-area-inset-bottom);
+  max-width: none;
+  margin: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   pointer-events: none;
+  /* Never move with page content — fixed to viewport bottom edge */
+  transform: none;
+}
+
+/* Landscape phones: keep nav usable without taking too much vertical space */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bottomnav-wrap {
+    display: none;
+  }
 }
 
 .bottomnav {
   pointer-events: auto;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   height: 64px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: #ffffff;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
 }
 
 /* No border-radius, no max-width, no floating pill — full width, attached to bottom edge */
@@ -149,6 +164,8 @@
   transition: color var(--dur-fast) var(--ease);
   text-decoration: none;
   white-space: nowrap;
+  flex: 1;
+  max-width: 60px;
 }
 
 .bottomnav-item[data-active='true'] {
@@ -173,8 +190,8 @@
 
 .nav-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 2px;
   min-width: 16px;
   height: 16px;
   background: #000;
@@ -192,13 +209,13 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* Hide mobile bottom nav on desktop — desktop header handles navigation */
-
 @media (min-width: 900px) {
   .bottomnav-wrap {
-    display: none;
+    display: none !important;
   }
 }
 

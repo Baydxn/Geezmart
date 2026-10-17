@@ -1,6 +1,7 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Icon, { type IconName } from './Icon';
 import { useCart } from '../store/CartContext';
+import { useEffect, useState } from 'react';
 
 interface Item {
   to: string;
@@ -23,6 +24,22 @@ function isActive(pathname: string, to: string) {
 export default function BottomNavigation() {
   const { pathname } = useLocation();
   const { itemCount } = useCart();
+  const navigate = useNavigate();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect desktop/tablet viewport so we never show bottom nav alongside desktop header.
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 900);
+    check();
+    window.addEventListener('resize', check);
+    window.addEventListener('orientationchange', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      window.removeEventListener('orientationchange', check);
+    };
+  }, []);
+
+  if (isDesktop) return null;
 
   return (
     <nav className="bottomnav-wrap" aria-label="Primary navigation">
@@ -38,6 +55,7 @@ export default function BottomNavigation() {
               data-active={active}
               aria-current={active ? 'page' : undefined}
               aria-label={item.label}
+              onClick={() => navigate(item.to, { replace: false })}
             >
               <span className="icon-circle" data-active={active}>
                 <Icon name={item.icon} size={20} strokeWidth={active ? 2 : 1.5} />
