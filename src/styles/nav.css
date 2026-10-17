@@ -223,6 +223,133 @@
   }
 }
 
+/* ---------- Glassmorphism navigation (premium alternative header) ---------- */
+
+.glass-nav {
+  position: fixed;
+  top: var(--announce-h, 0px);
+  left: 0;
+  right: 0;
+  z-index: 135;
+  height: 56px;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: rgba(0, 0, 0, 0.60);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 8px 32px -16px rgba(0, 0, 0, 0.45);
+  color: #fff;
+}
+
+.glass-nav-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.glass-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.glass-brand a {
+  text-decoration: none;
+  display: block;
+}
+
+.glass-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex: 1;
+  justify-content: center;
+}
+
+.glass-link {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  padding: 10px 0;
+  position: relative;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.glass-link:hover,
+.glass-link.glass-active {
+  color: #fff;
+}
+
+.glass-link.glass-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+}
+
+.glass-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.glass-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.glass-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.glass-icon-btn:active {
+  transform: scale(0.94);
+}
+
+.glass-badge {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  background: #fff;
+  color: #000;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+/* Hide glass nav on mobile — bottom nav handles mobile */
+@media (max-width: 899px) {
+  .glass-nav {
+    display: none;
+  }
+}
+
 /* ---------- Top navigation ---------- */
 
 .desknav {
