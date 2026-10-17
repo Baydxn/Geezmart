@@ -120,13 +120,10 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  /* Chrome Android does NOT support env(safe-area-inset-bottom) — fallback to 10px.
-     Safari/iOS uses the max() with env() for proper notch/home-indicator clearance. */
-  padding-bottom: 10px;
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
+  padding-bottom: 0;
   pointer-events: none;
   transform: none;
-  /* Prevent Chrome mobile double-tap zoom from shifting the fixed nav */
+  /* Pin flush to the bottom edge on every device — no safe-area gap */
   touch-action: manipulation;
 }
 
@@ -143,8 +140,7 @@
   justify-content: space-evenly;
   align-items: center;
   height: 64px;
-  padding-bottom: 10px;
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
+  padding-bottom: 0;
   background: #ffffff;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   width: 100%;
