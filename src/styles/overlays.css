@@ -6,7 +6,7 @@
 /* ---------- Toasts ---------- */
 .toasts {
   position: fixed;
-  z-index: 200;
+  z-index: 180;
   left: 50%;
   transform: translateX(-50%);
   top: calc(var(--header-h) + 12px + env(safe-area-inset-top, 0px));
@@ -341,7 +341,7 @@
 .sheet-wrapper {
   position: fixed;
   inset: 0;
-  z-index: 165; /* above the scrim (150) */
+  z-index: 190; /* above the scrim (150) and toasts (180) */
   display: flex;
   align-items: center;
   justify-content: center;

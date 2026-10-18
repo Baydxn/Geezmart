@@ -82,7 +82,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="stack" style={{ gap: 2 }} aria-label="Admin sections">
         {nav.map((item) => {
           const section = item.href.split('/')[2] ?? 'dashboard';
-          const allowed = section === 'admin' ? true : can(section);
+          const isRootPage = item.href === '/admin';
+          const allowed = isRootPage || can(section);
           const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
           return (
             <SidebarLink
@@ -297,10 +298,39 @@ export default function AdminShell({ children }: { children?: ReactNode }) {
 
         <main className="admin-body">
           {children ?? <Outlet />}
+          {store.status() === 'error' ? (
+            <div
+              style={{
+                marginTop: 12,
+                padding: '10px 12px',
+                border: '1px solid rgba(255,255,255,0.35)',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+              role="alert"
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '999px',
+                  background: '#ff4d4d',
+                  marginRight: 8,
+                }}
+              />
+              <span className="admin-hint">{store.error()}</span>
+            </div>
+          ) : null}
           <div style={{ marginTop: 26 }}>
             <IntegrationNote>
-              Control-centre changes are stored locally in this build. Connect the mutation helpers in{' '}
-              <code>src/lib/db.ts</code> to your API and every action becomes server-validated.
+              Control-centre changes are persisted to Supabase server-side on save
+              (the in-memory snapshot is only a read-through cache). Any failure is
+              surfaced through the status/error area below, and the snapshot is
+              re-read so the storefront always shows the latest published data.
             </IntegrationNote>
           </div>
         </main>

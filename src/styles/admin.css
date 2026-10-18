@@ -437,7 +437,7 @@ select.input-dark {
 .admin-modal-scrim {
   position: fixed;
   inset: 0;
-  z-index: 160;
+  z-index: 195;
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -445,18 +445,29 @@ select.input-dark {
 }
 .admin-modal {
   position: fixed;
-  z-index: 170;
+  z-index: 210;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   width: min(94vw, 520px);
   max-height: 86dvh;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   border-radius: var(--r-lg);
   border: 1px solid var(--line-strong);
   background: #0f1011;
   box-shadow: var(--shadow-lift);
   padding: 20px;
+}
+.modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 0;
+}
+.modal-footer {
+  margin-top: 0;
 }
 
 /* ---------------- Login ---------------- */
@@ -709,7 +720,7 @@ select.input-dark {
   cursor: help;
 }
 .admin-mobile-drawer {
-  z-index: 170;
+  z-index: 205;
 }
 .admin-mb-14 {
   margin-bottom: 14px;

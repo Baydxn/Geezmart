@@ -57,8 +57,8 @@ export function Modal({
                 <Icon name="close" size={16} />
               </button>
             </div>
-            {children}
-            {footer ? <div className="row" style={{ gap: 10, marginTop: 18 }}>{footer}</div> : null}
+            {children ? <div className="modal-body">{children}</div> : null}
+            {footer ? <div className="modal-footer">{footer}</div> : null}
           </motion.div>
         </>
       ) : null}
